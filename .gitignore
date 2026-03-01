@@ -1,0 +1,17 @@
+node_modules
+out
+.vscode
+.vscode-test
+*.vsix
+coverage
+*.log
+npm-debug.log*
+.DS_Store
+.env
+.env.*
+.eslintcache
+*.tsbuildinfo
+.idea/
+tmp/
+.tmp/
+.codex/
