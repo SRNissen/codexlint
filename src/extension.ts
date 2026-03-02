@@ -5,7 +5,7 @@ import { DEBUG_ENV_COMMAND_ID } from "./constants.js";
 const DIAGNOSTIC_SOURCE = "codexlint";
 const DEFAULT_DEBOUNCE_MS = 750;
 const DEFAULT_MAX_FILE_BYTES = 1_000_000;
-const DEFAULT_TIMEOUT_MS = 20_000;
+const DEFAULT_TIMEOUT_MS = 120_000;
 const BINARY_SCAN_CHARS = 8_192;
 
 interface CodexLintConfig {
@@ -150,6 +150,8 @@ async function analyzeSavedDocument(
     diagnostics.delete(document.uri);
     return;
   }
+
+  diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
     const findings = await runCodexExec(document, cfg);
@@ -437,6 +439,17 @@ function toDiagnostic(document: vscode.TextDocument, finding: CodexFinding): vsc
   if (finding.code !== undefined) {
     diagnostic.code = finding.code;
   }
+  return diagnostic;
+}
+
+function createAnalyzingDiagnostic(document: vscode.TextDocument): vscode.Diagnostic {
+  const diagnostic = new vscode.Diagnostic(
+    testDiagnosticRange(document),
+    "codexlint is analyzing this file for security issues...",
+    vscode.DiagnosticSeverity.Information
+  );
+  diagnostic.source = DIAGNOSTIC_SOURCE;
+  diagnostic.code = "analysis-in-progress";
   return diagnostic;
 }
 
