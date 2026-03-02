@@ -64,7 +64,7 @@
         },
         "codexlint.codex.timeoutMs": {
           "type": "number",
-          "default": 20000,
+          "default": 120000,
           "minimum": 1,
           "description": "Maximum time to wait for codex exec output."
         }

@@ -62,15 +62,15 @@ codexlint expects `codex exec` to return JSON in this shape:
 ```json
 {
   "findings": [
-        {
-          "message": "string",
-          "severity": "error|warning|info",
-          "line": 1,
-          "column": 1,
-          "endLine": 1,
-          "endColumn": 1,
-        }
-      ]
+    {
+      "message": "string",
+      "severity": "error|warning|info",
+      "line": 1,
+      "column": 1,
+      "endLine": 1,
+      "endColumn": 1
+    }
+  ]
 }
 ```
 
