@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { HELLO_COMMAND_ID } from "../src/constants.js";
+import { DEBUG_ENV_COMMAND_ID } from "../src/constants.js";
 
 describe("extension constants", () => {
   it("uses the project command namespace", () => {
-    expect(HELLO_COMMAND_ID).toBe("codexlint.hello");
+    expect(DEBUG_ENV_COMMAND_ID).toBe("codexlint.debugEnvironment");
   });
 });

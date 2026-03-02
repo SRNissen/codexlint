@@ -18,10 +18,58 @@
   "contributes": {
     "commands": [
       {
-        "command": "codexlint.hello",
-        "title": "codexlint: Hello"
+        "command": "codexlint.debugEnvironment",
+        "title": "codexlint: Debug Environment"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "codexlint",
+      "properties": {
+        "codexlint.onSave.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run codexlint security analysis when a file is saved."
+        },
+        "codexlint.onSave.debounceMs": {
+          "type": "number",
+          "default": 750,
+          "minimum": 0,
+          "description": "Delay before launching analysis after save."
+        },
+        "codexlint.onSave.maxFileBytes": {
+          "type": "number",
+          "default": 1000000,
+          "minimum": 1,
+          "description": "Skip files larger than this size in bytes."
+        },
+        "codexlint.onSave.skipBinaryFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Skip files that look binary."
+        },
+        "codexlint.codex.command": {
+          "type": "string",
+          "default": "codex",
+          "description": "Executable used to run codex analysis."
+        },
+        "codexlint.codex.args": {
+          "type": "array",
+          "default": [
+            "exec"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Arguments passed before the generated analysis prompt."
+        },
+        "codexlint.codex.timeoutMs": {
+          "type": "number",
+          "default": 20000,
+          "minimum": 1,
+          "description": "Maximum time to wait for codex exec output."
+        }
+      }
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",

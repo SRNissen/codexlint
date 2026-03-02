@@ -45,3 +45,43 @@ The codexlint extension
   ```bash
   npm test
   ```
+
+## Current behavior
+
+- On file save, runs pre-check filters:
+  - file URI only
+  - non-empty file
+  - max file size threshold
+  - optional binary-file skip
+- If the file passes filters, runs `codex exec` and converts JSON findings to VS Code diagnostics.
+
+## codex output contract
+
+codexlint expects `codex exec` to return JSON in this shape:
+
+```json
+{
+  "findings": [
+        {
+          "message": "string",
+          "severity": "error|warning|info",
+          "line": 1,
+          "column": 1,
+          "endLine": 1,
+          "endColumn": 1,
+        }
+      ]
+}
+```
+
+Allowed `severity` values are `error`, `warning`, and `info`.
+
+## Settings
+
+- `codexlint.onSave.enabled`
+- `codexlint.onSave.debounceMs`
+- `codexlint.onSave.maxFileBytes`
+- `codexlint.onSave.skipBinaryFiles`
+- `codexlint.codex.command`
+- `codexlint.codex.args`
+- `codexlint.codex.timeoutMs`

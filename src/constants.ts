@@ -1,1 +1,1 @@
-export const HELLO_COMMAND_ID = "codexlint.hello";
+export const DEBUG_ENV_COMMAND_ID = "codexlint.debugEnvironment";
