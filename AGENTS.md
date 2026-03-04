@@ -6,6 +6,10 @@ This file captures project context that is not obvious from code alone.
 
 Project intent and high-level behavior are described in `README.md`.
 
+## Code style preferences
+
+It is unacceptable for a security extension to introduce security problems. Introduce as few packages as possible, and only packages that are maintained and up to date.
+
 ## Important environment caveat
 
 The VS Code Extension Host environment can differ from the integrated terminal environment.
