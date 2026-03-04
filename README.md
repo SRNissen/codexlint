@@ -1,87 +1,16 @@
-# codexlint
+# README
 
-The codexlint extension
+The vscode codexlint extension uses Codex CLI to continuously monitor development from a security perspective.
 
-## Local development
+## Current state
 
-1. Install dependencies:
 
-   ```bash
-   npm install
-   ```
+The current state of codexlint is that it works - on every file save, the entire file is passed to `codex exec` for evaluation.
 
-2. Compile once:
+## Future development goals
 
-   ```bash
-   npm run compile
-   ```
+Experimenting with the impact of various alternatives
 
-3. Start TypeScript watch mode (optional while developing):
-
-   ```bash
-   npm run watch
-   ```
-
-4. Run the extension in a development host:
-   - Open this folder in VS Code.
-   - Press `F5` and choose `Run Extension`.
-
-## Quality checks
-
-- Lint:
-
-  ```bash
-  npm run lint
-  ```
-
-- Format check:
-
-  ```bash
-  npm run format:check
-  ```
-
-- Tests:
-
-  ```bash
-  npm test
-  ```
-
-## Current behavior
-
-- On file save, runs pre-check filters:
-  - file URI only
-  - non-empty file
-  - max file size threshold
-  - optional binary-file skip
-- If the file passes filters, runs `codex exec` and converts JSON findings to VS Code diagnostics.
-
-## codex output contract
-
-codexlint expects `codex exec` to return JSON in this shape:
-
-```json
-{
-  "findings": [
-    {
-      "message": "string",
-      "severity": "error|warning|info",
-      "line": 1,
-      "column": 1,
-      "endLine": 1,
-      "endColumn": 1
-    }
-  ]
-}
-```
-
-Allowed `severity` values are `error`, `warning`, and `info`.
-
-## Settings
-
-- `codexlint.onSave.enabled`
-- `codexlint.onSave.debounceMs`
-- `codexlint.onSave.maxFileBytes`
-- `codexlint.onSave.skipBinaryFiles`
-- `codexlint.codex.command`
-- `codexlint.codex.args`
-- `codexlint.codex.timeoutMs`
+- Keeping one thread running that has the entire project in context, sending only file diffs.
+- Using multiple threads in parallel to split work
+- Examining what instructions best convey intent to the linting thread.
