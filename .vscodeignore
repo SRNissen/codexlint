@@ -1,0 +1,15 @@
+.git/**
+.vscode/**
+.codex/**
+node_modules/**
+src/**
+test/**
+out/**/*.map
+tsconfig.json
+eslint.config.mjs
+vitest.config.mts
+.prettierrc.json
+.prettierignore
+.gitignore
+package-lock.json
+AGENTS.md
