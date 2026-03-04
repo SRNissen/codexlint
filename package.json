@@ -1,19 +1,21 @@
 {
   "name": "codexlint",
-  "displayName": "codexlint",
-  "description": "VS Code extension scaffold for codexlint.",
   "version": "0.0.1",
   "publisher": "SRNissen",
-  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SRNissen/codexlint"
+  },
   "engines": {
     "vscode": "^1.109.0"
   },
-  "activationEvents": [
-    "onStartupFinished"
-  ],
+  "license": "MIT",
+  "displayName": "codexlint",
+  "description": "Lint with Codex CLI",
   "categories": [
-    "Other"
+    "Linters"
   ],
+  "preview": true,
   "main": "./out/src/extension.js",
   "contributes": {
     "commands": [
@@ -71,15 +73,9 @@
       }
     }
   },
-  "scripts": {
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"vitest.config.mts\"",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "devDependencies": {
     "@types/node": "^25.3.3",
     "@types/vscode": "^1.109.0",
@@ -89,5 +85,15 @@
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
-  }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"vitest.config.mts\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "type": "module"
 }
