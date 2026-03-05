@@ -1,20 +1,25 @@
 {
   "name": "codexlint",
+  "displayName": "codexlint",
   "version": "0.0.1",
   "publisher": "SRNissen",
+  "description": "Lint with Codex CLI",
+  "author": "SRNissen",
+  "categories": [
+    "Linters"
+  ],
+  "icon": "icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/SRNissen/codexlint"
+  },
+  "bugs": {
+    "url": "https://github.com/SRNissen/codexlint/issues"
   },
   "engines": {
     "vscode": "^1.109.0"
   },
   "license": "MIT",
-  "displayName": "codexlint",
-  "description": "Lint with Codex CLI",
-  "categories": [
-    "Linters"
-  ],
   "preview": true,
   "main": "./out/src/extension.js",
   "contributes": {

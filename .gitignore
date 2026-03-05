@@ -12,6 +12,7 @@
 !prepare-dist.mjs
 !tsconfig.json
 !vitest.config.mts
+!icon.png
 
 !/test**
 !/src**

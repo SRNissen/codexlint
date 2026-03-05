@@ -24,6 +24,7 @@ async function addFile(filename) {
     await copyFile(path.join(rootDir, filename), path.join(distDir, filename));
 }
 [
+    'icon.png',
     'CHANGELOG.md',
     'LICENSE.TXT',
     'README.md',
