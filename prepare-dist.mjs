@@ -27,5 +27,6 @@ async function addFile(filename) {
     'CHANGELOG.md',
     'LICENSE.TXT',
     'README.md',
-    'package.json'
+    'package.json',
+    '.vscodeignore'
 ].forEach(addFile);
