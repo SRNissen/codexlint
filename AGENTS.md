@@ -16,7 +16,7 @@ The VS Code Extension Host environment can differ from vscode's integrated termi
 
 A command that works in the integrated terminal (for example `codex`) may still fail in the extension runtime if PATH is missing dependencies.
 
-During local debugging, if you use `.vscode/launch.json`, you can inject the path to your local codex instance by adding `env` to the  in the `configurations` array:
+During local debugging, if you use `.vscode/launch.json`, you can inject the path to your local codex instance by adding `env` to the in the `configurations` array:
 
 ```json
 {

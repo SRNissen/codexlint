@@ -4,7 +4,6 @@ The vscode codexlint extension uses Codex CLI to continuously monitor developmen
 
 ## Current state
 
-
 The current state of codexlint is that it works - on every file save, the entire file is passed to `codex exec` for evaluation.
 
 ## Future development goals
