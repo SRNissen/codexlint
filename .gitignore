@@ -9,6 +9,7 @@
 !LICENSE.TXT
 !package-lock.json
 !package.json
+!prepare-dist.mjs
 !tsconfig.json
 !vitest.config.mts
 
