@@ -22,7 +22,7 @@ The extension still has obvious problems.
   - Making the prompt configurable
   - Making the extension less dependent on specifically Codex CLI - much as I like it, other users might have different preferences
   - Check if there's a way to make the linter independent of the system-wide AGENTS.md file so it can run the same on various systems (and checking whether this is even a preferable way to do things.)
-  - Add a test that validates what actually ends up in the distribution package
+- Add a test that validates what actually ends up in the distribution package
 
 ## Credit
 
