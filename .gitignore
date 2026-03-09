@@ -4,15 +4,15 @@
 !.prettierignore
 !.prettierrc.json
 !.vscodeignore
-!*.md
+
 !.eslint.config.js
-!LICENSE.TXT
 !package-lock.json
 !package.json
 !prepare-dist.mjs
 !tsconfig.json
-!vitest.config.mts
+
+!*.md
+!LICENSE.TXT
 !icon.png
 
-!/test**
 !/src**
