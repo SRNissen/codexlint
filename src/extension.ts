@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { analyzeSavedDocument } from "./analyze.js";
-import { registerDebugEnvironmentCommand } from "./debug.js";
+import { printEnv } from "./debug.js";
 import { DIAGNOSTIC_SOURCE, getConfig } from "./shared.js";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -9,7 +9,9 @@ export function activate(context: vscode.ExtensionContext): void {
   const pendingByUri = new Map<string, ReturnType<typeof setTimeout>>();
   const runSequenceByUri = new Map<string, number>();
 
-  const debugEnvironmentCommand = registerDebugEnvironmentCommand(output);
+  const debugEnvironment = vscode.commands.registerCommand("codexlint.debugEnvironment", () => {
+    printEnv(output);
+  });
 
   const saveHandler = vscode.workspace.onDidSaveTextDocument((document) => {
     const cfg = getConfig();
@@ -46,7 +48,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     diagnostics,
     output,
-    debugEnvironmentCommand,
+    debugEnvironment,
     saveHandler,
     timerCleanup
   );
