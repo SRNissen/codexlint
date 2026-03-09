@@ -1,12 +1,13 @@
 import * as vscode from "vscode";
 import { spawn } from "node:child_process";
-import { DEBUG_ENV_COMMAND_ID } from "./constants.js";
 
 const DIAGNOSTIC_SOURCE = "codexlint";
 const DEFAULT_DEBOUNCE_MS = 750;
 const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 const DEFAULT_TIMEOUT_MS = 120_000;
 const BINARY_SCAN_CHARS = 8_192;
+const DEBUG_ENV_COMMAND_ID = "codexlint.debugEnvironment";
+
 
 interface CodexLintConfig {
   enabled: boolean;
