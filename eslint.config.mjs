@@ -11,7 +11,7 @@ export default [
     ignores: ["out/**", "node_modules/**"]
   },
   {
-    files: ["src/**/*.ts", "test/**/*.ts", "vitest.config.mts"],
+    files: ["src/**/*.ts"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {

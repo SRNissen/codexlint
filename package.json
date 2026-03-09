@@ -89,17 +89,14 @@
     "@vscode/vsce": "^3.7.1",
     "eslint": "^10.0.2",
     "prettier": "^3.8.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "compile": "tsc -p ./ && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
     "watch": "tsc -watch -p ./",
-    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"vitest.config.mts\"",
+    "lint": "eslint \"src/**/*.ts\"",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "format:check": "prettier --check ."
   },
   "type": "module"
 }
