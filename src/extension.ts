@@ -157,7 +157,17 @@ async function analyzeSavedDocument(
   diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
-    const findings = await runCodexExec(document, cfg);
+    const prompt = buildPrompt(document);
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+    const cwd = workspaceFolder?.uri.fsPath;
+    const stdout = await runProcessWithTimeout({
+      command: cfg.codexCommand,
+      args: [...cfg.codexArgs, prompt],
+      stdin: prompt,
+      timeoutMs: cfg.timeoutMs,
+      cwd
+    });
+    const findings = parseFindings(stdout);
 
     if (runSequenceByUri.get(uriKey) !== runSequence) {
       return;
@@ -209,25 +219,6 @@ function shouldAnalyze(document: vscode.TextDocument, cfg: CodexLintConfig): boo
 
   const sample = text.slice(0, BINARY_SCAN_CHARS);
   return !sample.includes("\u0000");
-}
-
-async function runCodexExec(
-  document: vscode.TextDocument,
-  cfg: CodexLintConfig
-): Promise<CodexFinding[]> {
-  const prompt = buildPrompt(document);
-  const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-  const cwd = workspaceFolder?.uri.fsPath;
-
-  const stdout = await runProcessWithTimeout({
-    command: cfg.codexCommand,
-    args: [...cfg.codexArgs, prompt],
-    stdin: prompt,
-    timeoutMs: cfg.timeoutMs,
-    cwd
-  });
-
-  return parseFindings(stdout);
 }
 
 function buildPrompt(document: vscode.TextDocument): string {
