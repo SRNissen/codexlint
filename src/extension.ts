@@ -39,6 +39,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const executablePath = process.execPath;
     const codexCommand = getConfig().codexCommand;
     const nodePath = process.env.NODE ?? "(undefined)";
+    const lookupCommand = process.platform === "win32" ? "where" : "which";
 
     output.appendLine("[codexlint] Extension Host environment diagnostics");
     output.appendLine(`[codexlint] process.execPath=${executablePath}`);
@@ -47,33 +48,35 @@ export function activate(context: vscode.ExtensionContext): void {
     output.appendLine(`[codexlint] configured codex command=${codexCommand}`);
 
     void runProcessWithTimeout({
-      command: "which",
+      command: lookupCommand,
       args: ["node"],
       stdin: "",
       timeoutMs: 3_000,
       cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
     })
       .then((stdout) => {
-        output.appendLine(`[codexlint] which node => ${stdout.trim() || "(not found)"}`);
+        output.appendLine(`[codexlint] ${lookupCommand} node => ${stdout.trim() || "(not found)"}`);
       })
       .catch((error) => {
         const message = error instanceof Error ? error.message : String(error);
-        output.appendLine(`[codexlint] which node failed => ${message}`);
+        output.appendLine(`[codexlint] ${lookupCommand} node failed => ${message}`);
       });
 
     void runProcessWithTimeout({
-      command: "which",
+      command: lookupCommand,
       args: [codexCommand],
       stdin: "",
       timeoutMs: 3_000,
       cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
     })
       .then((stdout) => {
-        output.appendLine(`[codexlint] which ${codexCommand} => ${stdout.trim() || "(not found)"}`);
+        output.appendLine(
+          `[codexlint] ${lookupCommand} ${codexCommand} => ${stdout.trim() || "(not found)"}`
+        );
       })
       .catch((error) => {
         const message = error instanceof Error ? error.message : String(error);
-        output.appendLine(`[codexlint] which ${codexCommand} failed => ${message}`);
+        output.appendLine(`[codexlint] ${lookupCommand} ${codexCommand} failed => ${message}`);
       });
 
     output.show(true);
