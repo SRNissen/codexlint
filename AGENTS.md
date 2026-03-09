@@ -21,8 +21,10 @@ During local debugging, if you use `.vscode/launch.json`, you can inject the pat
 ```json
 {
     "configurations": [
-        "env": {
-            "PATH": "/absolute/path/to/node/bin:${env:PATH}"
+        {
+            "env": {
+                "PATH": "/absolute/path/to/node/bin:${env:PATH}"
+            }
         }
     ]
 }
