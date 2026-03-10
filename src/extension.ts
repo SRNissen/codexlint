@@ -1,25 +1,33 @@
 import * as vscode from "vscode";
 import { printEnv } from "./debug.js";
 import { onSave, type SaveResources } from "./saveCoordinator.js";
-import { DIAGNOSTIC_SOURCE } from "./shared.js";
+import { EXTENSION_NAME } from "./shared.js";
 
 export function activate(context: vscode.ExtensionContext): void {
   const resources = createResources();
-  const saveHandler = vscode.workspace.onDidSaveTextDocument((document) => onSave(document, resources));
-  const debugEnvironment = vscode.commands.registerCommand("codexlint.debugEnvironment", () => {
-    printEnv(resources.output);
-  });
 
-  context.subscriptions.push(saveHandler, debugEnvironment, resources);
+  const saveHandler = vscode.workspace.onDidSaveTextDocument(
+    (document) => onSave(document, resources)
+  );
+  const debugEnvironment = vscode.commands.registerCommand(
+    "codexlint.debugEnvironment",
+    () => printEnv(resources.output)
+  );
+
+  context.subscriptions.push(
+    saveHandler,
+    debugEnvironment,
+    resources
+  );
 }
 
-export function deactivate(): void {}
+export function deactivate(): void { }
 
-interface ExtensionResources extends SaveResources, vscode.Disposable {}
+interface ExtensionResources extends SaveResources, vscode.Disposable { }
 
 function createResources(): ExtensionResources {
-  const diagnostics = vscode.languages.createDiagnosticCollection(DIAGNOSTIC_SOURCE);
-  const output = vscode.window.createOutputChannel(DIAGNOSTIC_SOURCE);
+  const diagnostics = vscode.languages.createDiagnosticCollection(EXTENSION_NAME);
+  const output = vscode.window.createOutputChannel(EXTENSION_NAME);
   const pendingByUri = new Map<string, ReturnType<typeof setTimeout>>();
   const runSequenceByUri = new Map<string, number>();
 

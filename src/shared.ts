@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { spawn } from "node:child_process";
 
-export const DIAGNOSTIC_SOURCE = "codexlint";
+export const EXTENSION_NAME = "codexlint";
 export const DEFAULT_DEBOUNCE_MS = 750;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
