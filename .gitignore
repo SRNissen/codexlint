@@ -1,18 +1,30 @@
 *
 **
+# Common
+!CHANGELOG.md
+!README.md
+!LICENSE.TXT
+!icon.png
+
+#dev tooling
 !.gitignore
 !.prettierignore
 !.prettierrc.json
 !.vscodeignore
-
+!AGENTS.md
 !.eslint.config.js
 !package-lock.json
 !package.json
 !prepare-dist.mjs
 !tsconfig.json
+!tsconfig.test.json
 
-!*.md
-!LICENSE.TXT
-!icon.png
+#test
+!.vscode-test.mjs
+!/test/
+!/test/**
+!/test-workspace/
+!/test-workspace/.gitkeep
 
+#source
 !/src**

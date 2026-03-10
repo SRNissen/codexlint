@@ -135,6 +135,8 @@
     "compile": "tsc -p ./ && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
     "watch": "tsc -watch -p ./",
     "lint": "eslint \"src/**/*.ts\"",
+    "test:build": "tsc -p ./ && tsc -p ./tsconfig.test.json",
+    "test": "npm run test:build && vscode-test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
