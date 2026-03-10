@@ -128,24 +128,20 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "eslint": "^10.0.2",
-    "prettier": "^3.8.1",
     "typescript": "^5.9.3"
   },
   "scripts": {
     "build": "npm run build:release",
-    "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
-    "build:verify": "npm run build:clean && npm run lint && npm run compile:extension && npm run test",
     "build:release": "npm run build:verify && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
+    "build:verify": "npm run build:clean && npm run lint && npm run compile:extension && npm run test",
+    "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
     "compile": "npm run compile:extension && npm run compile:test",
     "compile:test": "tsc -p ./tsconfig.test.json",
     "compile:extension": "tsc -p ./",
     "watch": "npm run watch:extension",
     "watch:extension": "tsc -watch -p ./",
     "lint": "eslint \"src/**/*.ts\"",
-    "test": "npm run compile:test && vscode-test",
-    "ci": "npm run lint && npm run format:check && npm run test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "test": "npm run compile:test && vscode-test"
   },
   "type": "module"
 }
