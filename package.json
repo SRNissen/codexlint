@@ -133,7 +133,7 @@
   "scripts": {
     "build": "npm run build:release",
     "build:release": "npm run build:verify && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
-    "build:verify": "npm run build:clean && npm run lint && npm run compile:extension && npm run test",
+    "build:verify": "npm run build:clean && npm run lint && npm run test",
     "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
     "compile": "npm run compile:extension && npm run compile:test",
     "compile:test": "tsc -p ./tsconfig.test.json",
