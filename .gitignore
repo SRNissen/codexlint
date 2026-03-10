@@ -23,8 +23,6 @@
 !.vscode-test.mjs
 !/test/
 !/test/**
-!/test-workspace/
-!/test-workspace/.gitkeep
 
 #source
 !/src**
