@@ -15,7 +15,7 @@ suite("skills forwarding", () => {
       promptTemplate: "File: {{filePath}}\n{{fileText}}"
     });
 
-    const uri = vscode.Uri.joinPath(workspaceFolder.uri, "analysis-runs-on-save.c");
+    const uri = vscode.Uri.joinPath(workspaceFolder.uri, "analysis-runs-on-save.txt");
     const diagnostics = await saveAndWaitForDiagnostic(uri, "analysis-ran");
 
     assert.ok(
@@ -34,7 +34,7 @@ suite("skills forwarding", () => {
       promptTemplate: ["Enabled skills:", "{{skillsList}}", "", "{{fileText}}"].join("\n")
     });
 
-    const uri = vscode.Uri.joinPath(workspaceFolder.uri, "skills-forwarding.c");
+    const uri = vscode.Uri.joinPath(workspaceFolder.uri, "skills-forwarding.txt");
     const diagnostics = await saveAndWaitForDiagnostic(uri, "skills-used");
 
     assert.ok(
@@ -74,7 +74,7 @@ async function saveAndWaitForDiagnostic(
   uri: vscode.Uri,
   expectedCode: string
 ): Promise<vscode.Diagnostic[]> {
-  await vscode.workspace.fs.writeFile(uri, Buffer.from("int main() { return 0; }\n", "utf8"));
+  await vscode.workspace.fs.writeFile(uri, Buffer.from("Lorem ipsum", "utf8"));
   const document = await vscode.workspace.openTextDocument(uri);
   const editor = await vscode.window.showTextDocument(document);
   await editor.edit((builder) => {
