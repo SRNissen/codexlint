@@ -132,11 +132,18 @@
     "typescript": "^5.9.3"
   },
   "scripts": {
-    "compile": "tsc -p ./ && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
-    "watch": "tsc -watch -p ./",
+    "clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
+    "build": "npm run build:release",
+    "build:release": "npm run compile && npm run test && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
+    "build:extension": "tsc -p ./",
+    "build:test": "tsc -p ./tsconfig.test.json",
+    "compile": "tsc -p ./",
+    "watch": "npm run watch:extension",
+    "watch:extension": "tsc -watch -p ./",
     "lint": "eslint \"src/**/*.ts\"",
-    "test:build": "tsc -p ./ && tsc -p ./tsconfig.test.json",
+    "test:build": "npm run build:extension && npm run build:test",
     "test": "npm run test:build && vscode-test",
+    "ci": "npm run lint && npm run format:check && npm run test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
