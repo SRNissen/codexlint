@@ -5,7 +5,6 @@ export const DIAGNOSTIC_SOURCE = "codexlint";
 export const DEFAULT_DEBOUNCE_MS = 750;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
-export const DEBUG_ENV_COMMAND_ID = "codexlint.debugEnvironment";
 export const DEFAULT_PROMPT_TEMPLATE = [
   "You are a static security reviewer for a single source file.",
   "Analyze only the file content provided below.",
