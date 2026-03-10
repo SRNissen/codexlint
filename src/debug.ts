@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import { DEBUG_ENV_COMMAND_ID, getConfig, runProcessWithTimeout } from "./shared.js";
+import { getConfig, runProcessWithTimeout } from "./shared.js";
 
 export function printEnv(output: vscode.OutputChannel) {
   const pathValue = process.env.PATH ?? "(undefined)";
   const executablePath = process.execPath;
-  const codexCommand = getConfig().codexCommand;
+  const configuredCommand = getConfig().codexCommand;
   const nodePath = process.env.NODE ?? "(undefined)";
   const lookupCommand = process.platform === "win32" ? "where" : "which";
 
@@ -12,7 +12,7 @@ export function printEnv(output: vscode.OutputChannel) {
   output.appendLine(`[codexlint] process.execPath=${executablePath}`);
   output.appendLine(`[codexlint] PATH=${pathValue}`);
   output.appendLine(`[codexlint] NODE=${nodePath}`);
-  output.appendLine(`[codexlint] configured codex command=${codexCommand}`);
+  output.appendLine(`[codexlint] configured analysis command=${configuredCommand}`);
 
   void runProcessWithTimeout({
     command: lookupCommand,
@@ -31,19 +31,21 @@ export function printEnv(output: vscode.OutputChannel) {
 
   void runProcessWithTimeout({
     command: lookupCommand,
-    args: [codexCommand],
+    args: [configuredCommand],
     stdin: "",
     timeoutMs: 3_000,
     cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
   })
     .then((stdout) => {
       output.appendLine(
-        `[codexlint] ${lookupCommand} ${codexCommand} => ${stdout.trim() || "(not found)"}`
+        `[codexlint] ${lookupCommand} ${configuredCommand} => ${stdout.trim() || "(not found)"}`
       );
     })
     .catch((error) => {
       const message = error instanceof Error ? error.message : String(error);
-      output.appendLine(`[codexlint] ${lookupCommand} ${codexCommand} failed => ${message}`);
+      output.appendLine(
+        `[codexlint] ${lookupCommand} ${configuredCommand} failed => ${message}`
+      );
     });
 
   output.show(true);

@@ -67,13 +67,51 @@
           "items": {
             "type": "string"
           },
-          "description": "Arguments passed before the generated analysis prompt."
+          "description": "Base arguments passed to the configured analysis command before model/skill arguments and prompt injection."
+        },
+        "codexlint.codex.model": {
+          "type": "string",
+          "default": "",
+          "description": "Optional model identifier. Leave empty to let the CLI/tool default decide."
+        },
+        "codexlint.codex.modelArg": {
+          "type": "string",
+          "default": "--model",
+          "description": "Flag used to pass codexlint.codex.model to the analysis command."
+        },
+        "codexlint.codex.skills": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional list of skills to pass to the analysis command (one flag per entry). Also available in prompt via {{skillsList}}."
+        },
+        "codexlint.codex.skillArg": {
+          "type": "string",
+          "default": "--skill",
+          "description": "Flag used to pass each skill from codexlint.codex.skills."
+        },
+        "codexlint.codex.promptTransport": {
+          "type": "string",
+          "default": "stdinAndArg",
+          "enum": [
+            "stdin",
+            "arg",
+            "stdinAndArg"
+          ],
+          "description": "How the rendered prompt is passed to the analysis command."
+        },
+        "codexlint.codex.promptTemplate": {
+          "type": "string",
+          "default": "You are a static security reviewer for a single source file.\nAnalyze only the file content provided below.\nReturn JSON only.\nOutput schema:\n{\n  \"findings\": [\n    {\n      \"message\": \"string\",\n      \"severity\": \"error|warning|info\",\n      \"line\": 1,\n      \"column\": 1,\n      \"endLine\": 1,\n      \"endColumn\": 1,\n    }\n  ]\n}\n\nEnabled skills:\n{{skillsList}}\n\nFile path: {{filePath}}\nLanguage: {{fileLanguage}}\nFile content:\n{{fileText}}",
+          "description": "Prompt template. Supported tokens: {{filePath}}, {{fileLanguage}}, {{fileText}}, {{skillsList}}."
         },
         "codexlint.codex.timeoutMs": {
           "type": "number",
           "default": 120000,
           "minimum": 1,
-          "description": "Maximum time to wait for codex exec output."
+          "description": "Maximum time to wait for analysis command output."
         }
       }
     }

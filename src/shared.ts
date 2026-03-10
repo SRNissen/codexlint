@@ -6,6 +6,34 @@ export const DEFAULT_DEBOUNCE_MS = 750;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 export const DEBUG_ENV_COMMAND_ID = "codexlint.debugEnvironment";
+export const DEFAULT_PROMPT_TEMPLATE = [
+  "You are a static security reviewer for a single source file.",
+  "Analyze only the file content provided below.",
+  "Return JSON only.",
+  "Output schema:",
+  "{",
+  '  "findings": [',
+  "    {",
+  '      "message": "string",',
+  '      "severity": "error|warning|info",',
+  '      "line": 1,',
+  '      "column": 1,',
+  '      "endLine": 1,',
+  '      "endColumn": 1,',
+  "    }",
+  "  ]",
+  "}",
+  "",
+  "Enabled skills:",
+  "{{skillsList}}",
+  "",
+  "File path: {{filePath}}",
+  "Language: {{fileLanguage}}",
+  "File content:",
+  "{{fileText}}"
+].join("\n");
+
+export type PromptTransport = "stdin" | "arg" | "stdinAndArg";
 
 export interface CodexLintConfig {
   enabled: boolean;
@@ -14,6 +42,12 @@ export interface CodexLintConfig {
   skipBinaryFiles: boolean;
   codexCommand: string;
   codexArgs: string[];
+  codexModel: string;
+  codexModelArg: string;
+  codexSkills: string[];
+  codexSkillArg: string;
+  promptTransport: PromptTransport;
+  promptTemplate: string;
   timeoutMs: number;
 }
 
@@ -30,6 +64,8 @@ export interface CodexFinding {
 export function getConfig(): CodexLintConfig {
   const config = vscode.workspace.getConfiguration("codexlint");
   const codexArgs = config.get<string[]>("codex.args", ["exec"]);
+  const codexSkills = config.get<string[]>("codex.skills", []);
+  const promptTransport = config.get<PromptTransport>("codex.promptTransport", "stdinAndArg");
   return {
     enabled: config.get<boolean>("onSave.enabled", true),
     debounceMs: config.get<number>("onSave.debounceMs", DEFAULT_DEBOUNCE_MS),
@@ -37,8 +73,23 @@ export function getConfig(): CodexLintConfig {
     skipBinaryFiles: config.get<boolean>("onSave.skipBinaryFiles", true),
     codexCommand: config.get<string>("codex.command", "codex"),
     codexArgs: Array.isArray(codexArgs) ? codexArgs : ["exec"],
+    codexModel: config.get<string>("codex.model", "").trim(),
+    codexModelArg: config.get<string>("codex.modelArg", "--model").trim(),
+    codexSkills: Array.isArray(codexSkills)
+      ? codexSkills.map((skill) => skill.trim()).filter((skill) => skill.length > 0)
+      : [],
+    codexSkillArg: config.get<string>("codex.skillArg", "--skill").trim(),
+    promptTransport: normalizePromptTransport(promptTransport),
+    promptTemplate: config.get<string>("codex.promptTemplate", DEFAULT_PROMPT_TEMPLATE),
     timeoutMs: config.get<number>("codex.timeoutMs", DEFAULT_TIMEOUT_MS)
   };
+}
+
+function normalizePromptTransport(value: unknown): PromptTransport {
+  if (value === "stdin" || value === "arg" || value === "stdinAndArg") {
+    return value;
+  }
+  return "stdinAndArg";
 }
 
 export function runProcessWithTimeout(options: {
@@ -79,13 +130,13 @@ export function runProcessWithTimeout(options: {
     child.on("close", (code) => {
       clearTimeout(timeoutHandle);
       if (timedOut) {
-        reject(new Error(`codex exec timed out after ${options.timeoutMs}ms`));
+        reject(new Error(`analysis command timed out after ${options.timeoutMs}ms`));
         return;
       }
 
       if (code !== 0) {
         const detail = stderr.trim() || stdout.trim() || `exit code ${code}`;
-        reject(new Error(`codex exec failed: ${detail}`));
+        reject(new Error(`analysis command failed: ${detail}`));
         return;
       }
 

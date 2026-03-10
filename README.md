@@ -12,6 +12,26 @@ The extension still has obvious problems.
 - on *every* save
   - (do you need your file sent after inserting a single comment? Do you need it sent *again* if you change the comment's format?)
 
+## Configuration
+
+codexlint now supports user configuration for command, model, prompt, and skills.
+
+Key settings:
+- `codexlint.codex.command`: executable to run.
+- `codexlint.codex.args`: base args (default `["exec"]`).
+- `codexlint.codex.model`: optional model id.
+- `codexlint.codex.modelArg`: model flag (default `--model`).
+- `codexlint.codex.skills`: optional skill names to pass.
+- `codexlint.codex.skillArg`: skill flag (default `--skill`).
+- `codexlint.codex.promptTemplate`: full prompt template.
+- `codexlint.codex.promptTransport`: `stdin`, `arg`, or `stdinAndArg`.
+
+Prompt template tokens:
+- `{{filePath}}`
+- `{{fileLanguage}}`
+- `{{fileText}}`
+- `{{skillsList}}`
+
 ### Future development goals
 
 - Better CI

@@ -27,13 +27,15 @@ export async function analyzeSavedDocument(
   diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
-    const prompt = buildPrompt(document);
+    const prompt = buildPrompt(document, cfg);
+    const args = buildCommandArgs(cfg, prompt);
+    const stdin = shouldWritePromptToStdin(cfg) ? prompt : "";
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     const cwd = workspaceFolder?.uri.fsPath;
     const stdout = await runProcessWithTimeout({
       command: cfg.codexCommand,
-      args: [...cfg.codexArgs, prompt],
-      stdin: prompt,
+      args,
+      stdin,
       timeoutMs: cfg.timeoutMs,
       cwd
     });
@@ -60,11 +62,11 @@ export async function analyzeSavedDocument(
 
     const diagnostic = new vscode.Diagnostic(
       testDiagnosticRange(document),
-      `codexlint failed to run codex exec: ${message}`,
+      `codexlint failed to run configured analysis command: ${message}`,
       vscode.DiagnosticSeverity.Warning
     );
     diagnostic.source = DIAGNOSTIC_SOURCE;
-    diagnostic.code = "codex-exec-failed";
+    diagnostic.code = "analysis-command-failed";
     diagnostics.set(document.uri, [diagnostic]);
   }
 }
@@ -91,34 +93,57 @@ function shouldAnalyze(document: vscode.TextDocument, cfg: CodexLintConfig): boo
   return !sample.includes("\u0000");
 }
 
-function buildPrompt(document: vscode.TextDocument): string {
+function buildPrompt(document: vscode.TextDocument, cfg: CodexLintConfig): string {
   const filePath = document.uri.fsPath;
   const fileLanguage = document.languageId;
   const fileText = document.getText();
+  const skillsList =
+    cfg.codexSkills.length === 0
+      ? "- (none configured)"
+      : cfg.codexSkills.map((skill) => `- ${skill}`).join("\n");
 
-  return [
-    "You are a static security reviewer for a single source file.",
-    "Analyze only the file content provided below.",
-    "Return JSON only.",
-    "Output schema:",
-    "{",
-    '  "findings": [',
-    "    {",
-    '      "message": "string",',
-    '      "severity": "error|warning|info",',
-    '      "line": 1,',
-    '      "column": 1,',
-    '      "endLine": 1,',
-    '      "endColumn": 1,',
-    "    }",
-    "  ]",
-    "}",
-    "",
-    `File path: ${filePath}`,
-    `Language: ${fileLanguage}`,
-    "File content:",
-    fileText
-  ].join("\n");
+  return renderTemplate(cfg.promptTemplate, {
+    filePath,
+    fileLanguage,
+    fileText,
+    skillsList
+  });
+}
+
+function buildCommandArgs(cfg: CodexLintConfig, prompt: string): string[] {
+  const args = [...cfg.codexArgs];
+
+  if (cfg.codexModel.length > 0 && cfg.codexModelArg.length > 0) {
+    args.push(cfg.codexModelArg, cfg.codexModel);
+  }
+
+  if (cfg.codexSkillArg.length > 0) {
+    for (const skill of cfg.codexSkills) {
+      args.push(cfg.codexSkillArg, skill);
+    }
+  }
+
+  if (shouldPassPromptAsArg(cfg)) {
+    args.push(prompt);
+  }
+
+  return args;
+}
+
+function shouldPassPromptAsArg(cfg: CodexLintConfig): boolean {
+  return cfg.promptTransport === "arg" || cfg.promptTransport === "stdinAndArg";
+}
+
+function shouldWritePromptToStdin(cfg: CodexLintConfig): boolean {
+  return cfg.promptTransport === "stdin" || cfg.promptTransport === "stdinAndArg";
+}
+
+function renderTemplate(template: string, values: Record<string, string>): string {
+  let rendered = template;
+  for (const [key, value] of Object.entries(values)) {
+    rendered = rendered.split(`{{${key}}}`).join(value);
+  }
+  return rendered;
 }
 
 function parseFindings(rawOutput: string): CodexFinding[] {
@@ -130,7 +155,7 @@ function parseFindings(rawOutput: string): CodexFinding[] {
   } else if (isRecord(parsed) && Array.isArray(parsed.findings)) {
     findingObjects = parsed.findings;
   } else {
-    throw new Error("codex exec output did not match expected findings schema");
+    throw new Error("analysis output did not match expected findings schema");
   }
 
   const findings: CodexFinding[] = [];
@@ -194,7 +219,7 @@ function toPositiveInt(value: unknown, fallback: number): number {
 function parseJsonLenient(raw: string): unknown {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
-    throw new Error("codex exec returned empty output");
+    throw new Error("analysis command returned empty output");
   }
 
   try {
@@ -233,7 +258,7 @@ function parseJsonLenient(raw: string): unknown {
     }
   }
 
-  throw new Error("codex exec returned non-JSON output");
+  throw new Error("analysis command returned non-JSON output");
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
