@@ -63,8 +63,8 @@ async function runAnalysisForDocument(
           );
           resources.output.appendLine(requestText);
         })
-        .catch(() => {
-          // Ignore debug logging errors.
+        .catch((error) => {
+          console.error(`[${EXTENSION_NAME}] failed to log analyzer request template`, error);
         });
 
       void responseText
@@ -77,8 +77,8 @@ async function runAnalysisForDocument(
           );
           resources.output.appendLine(responseLogText);
         })
-        .catch(() => {
-          // Ignore debug logging errors.
+        .catch((error) => {
+          console.error(`[${EXTENSION_NAME}] failed to log analyzer response text`, error);
         });
     }
 
