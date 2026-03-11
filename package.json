@@ -29,6 +29,14 @@
         "title": "codexlint: Debug Environment"
       }
     ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "codexlint.debugEnvironment",
+          "when": "codexlint.showDebugEnvironmentCommand"
+        }
+      ]
+    },
     "configuration": [
       {
         "title": "Analyzer Selection",
@@ -65,12 +73,6 @@
               "pass files as stdin"
             ],
             "description": "How codexlint passes prompt text to a custom analyzer command. Ignored for codex exec and claude -p presets."
-          },
-          "codexlint.analyzer.timeoutMs": {
-            "type": "number",
-            "default": 120000,
-            "minimum": 1,
-            "description": "Maximum time to wait for analyzer output."
           }
         }
       },
@@ -100,29 +102,40 @@
         }
       },
       {
-        "title": "Action on Save",
+        "title": "Operation",
         "properties": {
-          "codexlint.onSave.enabled": {
+          "codexlint.operation.enabled": {
             "type": "boolean",
             "default": true,
             "description": "Run codexlint security analysis when a file is saved."
           },
-          "codexlint.onSave.debounceMs": {
+          "codexlint.operation.debounceMs": {
             "type": "number",
             "default": 750,
             "minimum": 0,
             "description": "Delay before launching analysis after save."
           },
-          "codexlint.onSave.maxFileBytes": {
+          "codexlint.operation.maxFileBytes": {
             "type": "number",
             "default": 1000000,
             "minimum": 1,
             "description": "Skip files larger than this size in bytes."
           },
-          "codexlint.onSave.skipBinaryFiles": {
+          "codexlint.operation.skipBinaryFiles": {
             "type": "boolean",
             "default": true,
             "description": "Skip files that look binary."
+          },
+          "codexlint.operation.timeoutMs": {
+            "type": "number",
+            "default": 120000,
+            "minimum": 1,
+            "description": "Maximum time to wait for analyzer output."
+          },
+          "codexlint.operation.showDebugCommand": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show the 'codexlint: Debug Environment' command in the Command Palette."
           }
         }
       }

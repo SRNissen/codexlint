@@ -75,16 +75,16 @@ export function getConfig(): CodexLintConfig {
     useCustomPrompt && customPrompt.trim().length > 0 ? customPrompt : DEFAULT_PROMPT_TEMPLATE;
 
   return {
-    enabled: config.get<boolean>("onSave.enabled", true),
-    debounceMs: config.get<number>("onSave.debounceMs", DEFAULT_DEBOUNCE_MS),
-    maxFileBytes: config.get<number>("onSave.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
-    skipBinaryFiles: config.get<boolean>("onSave.skipBinaryFiles", true),
+    enabled: config.get<boolean>("operation.enabled", true),
+    debounceMs: config.get<number>("operation.debounceMs", DEFAULT_DEBOUNCE_MS),
+    maxFileBytes: config.get<number>("operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
+    skipBinaryFiles: config.get<boolean>("operation.skipBinaryFiles", true),
     analysisCommand: command,
     analysisArgs: args,
     promptTransport,
     promptTemplate,
     selectedSkills: highlightSelectedSkills ? selectedSkills : [],
-    timeoutMs: config.get<number>("analyzer.timeoutMs", DEFAULT_TIMEOUT_MS)
+    timeoutMs: config.get<number>("operation.timeoutMs", DEFAULT_TIMEOUT_MS)
   };
 }
 
