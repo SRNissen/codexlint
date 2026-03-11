@@ -150,10 +150,10 @@ function toPositiveInt(value: unknown, fallback: number): number {
   return rounded > 0 ? rounded : fallback;
 }
 
-function parseJsonLenient(raw: string): unknown {
+export function parseJsonLenient(raw: string): unknown {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
-    throw new Error("analysis command returned empty output");
+    return buildParserFailureResult("analysis command returned empty output");
   }
 
   try {
@@ -162,9 +162,19 @@ function parseJsonLenient(raw: string): unknown {
     // Continue to fallback parsers.
   }
 
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  const fencedJson = fenced?.[1];
-  if (typeof fencedJson === "string") {
+  const fenceStart = trimmed.indexOf("```");
+  const fenceEnd = trimmed.lastIndexOf("```");
+  if (fenceStart >= 0 && fenceEnd > fenceStart) {
+    let fencedJson = trimmed.slice(fenceStart + 3, fenceEnd).trim();
+
+    const firstLineBreak = fencedJson.indexOf("\n");
+    if (firstLineBreak >= 0) {
+      const maybeLanguage = fencedJson.slice(0, firstLineBreak).trim().toLowerCase();
+      if (maybeLanguage === "json") {
+        fencedJson = fencedJson.slice(firstLineBreak + 1).trim();
+      }
+    }
+
     try {
       return JSON.parse(fencedJson);
     } catch {
@@ -192,9 +202,29 @@ function parseJsonLenient(raw: string): unknown {
     }
   }
 
-  throw new Error("analysis command returned non-JSON output");
+  return buildParserFailureResult("analysis command returned non-JSON output", trimmed);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function buildParserFailureResult(reason: string, rawOutput?: string): unknown {
+  const rawSummary =
+    rawOutput === undefined || rawOutput.length === 0
+      ? ""
+      : ` Raw output (truncated): ${rawOutput.slice(0, 500)}`;
+
+  return {
+    findings: [
+      {
+        message: `${reason}.${rawSummary}`,
+        severity: "warning",
+        line: 1,
+        column: 1,
+        endLine: 1,
+        endColumn: 1
+      }
+    ]
+  };
 }
