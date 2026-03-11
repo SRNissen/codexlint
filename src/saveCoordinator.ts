@@ -52,20 +52,43 @@ async function runAnalysisForDocument(
   try {
     const [requestTemplate, responseText, findings] = await analyzeSavedDocument(document, cfg);
 
+    if (cfg.showDebugIO) {
+      void requestTemplate
+        .then((requestText) => {
+          if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
+            return;
+          }
+          resources.output.appendLine(
+            `[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer request template (file content redacted)`
+          );
+          resources.output.appendLine(requestText);
+        })
+        .catch(() => {
+          // Ignore debug logging errors.
+        });
+
+      void responseText
+        .then((responseLogText) => {
+          if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
+            return;
+          }
+          resources.output.appendLine(
+            `[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer response text`
+          );
+          resources.output.appendLine(responseLogText);
+        })
+        .catch(() => {
+          // Ignore debug logging errors.
+        });
+    }
+
+    const resolvedFindings = await findings;
+
     if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
       return;
     }
 
-    if (cfg.showDebugIO) {
-      resources.output.appendLine(
-        `[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer request template (file content redacted)`
-      );
-      resources.output.appendLine(requestTemplate);
-      resources.output.appendLine(`[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer response text`);
-      resources.output.appendLine(responseText);
-    }
-
-    const nextDiagnostics = findings.map((finding) => toDiagnostic(document, finding));
+    const nextDiagnostics = resolvedFindings.map((finding) => toDiagnostic(document, finding));
     if (nextDiagnostics.length === 0) {
       resources.diagnostics.delete(document.uri);
       return;

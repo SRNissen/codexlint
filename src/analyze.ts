@@ -2,9 +2,9 @@ import * as vscode from "vscode";
 import { type CodexFinding, type CodexLintConfig, runProcessWithTimeout } from "./shared.js";
 
 export type AnalyzeSavedDocumentResult = [
-  requestTemplate: string,
-  responseText: string,
-  findings: CodexFinding[]
+  requestTemplate: Promise<string>,
+  responseText: Promise<string>,
+  findings: Promise<CodexFinding[]>
 ];
 
 export async function analyzeSavedDocument(
@@ -16,16 +16,16 @@ export async function analyzeSavedDocument(
   const stdin = shouldWritePromptToStdin(cfg) ? prompt.analysisPrompt : "";
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
   const cwd = workspaceFolder?.uri.fsPath;
-  const stdout = await runProcessWithTimeout({
+  const responseText = runProcessWithTimeout({
     command: cfg.analysisCommand,
     args,
     stdin,
     timeoutMs: cfg.timeoutMs,
     cwd
   });
-  const findings = parseFindings(stdout);
+  const findings = responseText.then((output) => parseFindings(output));
 
-  return [prompt.requestTemplate, stdout, findings];
+  return [Promise.resolve(prompt.requestTemplate), responseText, findings];
 }
 
 function buildPrompt(
