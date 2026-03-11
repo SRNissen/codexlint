@@ -11,7 +11,7 @@ export async function analyzeSavedDocument(
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
   const cwd = workspaceFolder?.uri.fsPath;
   const stdout = await runProcessWithTimeout({
-    command: cfg.codexCommand,
+    command: cfg.analysisCommand,
     args,
     stdin,
     timeoutMs: cfg.timeoutMs,
@@ -25,31 +25,21 @@ function buildPrompt(document: vscode.TextDocument, cfg: CodexLintConfig): strin
   const filePath = document.uri.fsPath;
   const fileLanguage = document.languageId;
   const fileText = document.getText();
-  const skillsList =
-    cfg.codexSkills.length === 0
-      ? "- (none configured)"
-      : cfg.codexSkills.map((skill) => `- ${skill}`).join("\n");
+  const selectedSkills =
+    cfg.selectedSkills.length === 0
+      ? "- (none selected)"
+      : cfg.selectedSkills.map((skill) => `- ${skill}`).join("\n");
 
   return renderTemplate(cfg.promptTemplate, {
     filePath,
     fileLanguage,
     fileText,
-    skillsList
+    selectedSkills
   });
 }
 
 function buildCommandArgs(cfg: CodexLintConfig, prompt: string): string[] {
-  const args = [...cfg.codexArgs];
-
-  if (cfg.codexModel.length > 0 && cfg.codexModelArg.length > 0) {
-    args.push(cfg.codexModelArg, cfg.codexModel);
-  }
-
-  if (cfg.codexSkillArg.length > 0) {
-    for (const skill of cfg.codexSkills) {
-      args.push(cfg.codexSkillArg, skill);
-    }
-  }
+  const args = [...cfg.analysisArgs];
 
   if (shouldPassPromptAsArg(cfg)) {
     args.push(prompt);
@@ -59,11 +49,11 @@ function buildCommandArgs(cfg: CodexLintConfig, prompt: string): string[] {
 }
 
 function shouldPassPromptAsArg(cfg: CodexLintConfig): boolean {
-  return cfg.promptTransport === "arg" || cfg.promptTransport === "stdinAndArg";
+  return cfg.promptTransport === "arg";
 }
 
 function shouldWritePromptToStdin(cfg: CodexLintConfig): boolean {
-  return cfg.promptTransport === "stdin" || cfg.promptTransport === "stdinAndArg";
+  return cfg.promptTransport === "stdin";
 }
 
 function renderTemplate(template: string, values: Record<string, string>): string {

@@ -4,7 +4,7 @@ import { getConfig, runProcessWithTimeout, EXTENSION_NAME } from "./shared.js";
 export function printEnv(output: vscode.OutputChannel) {
   const pathValue = process.env.PATH ?? "(undefined)";
   const executablePath = process.execPath;
-  const configuredCommand = getConfig().codexCommand;
+  const configuredCommand = getConfig().analysisCommand;
   const nodePath = process.env.NODE ?? "(undefined)";
   const lookupCommand = process.platform === "win32" ? "where" : "which";
 
