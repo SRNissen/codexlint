@@ -68,8 +68,8 @@ export function getConfig(): CodexLintConfig {
   const customInput = normalizePromptTransport(config.get<PromptTransport>("analyzer.customInput", "arg"));
   const selectedSkills = parseSelectedSkills(config.get<string>("prompt.selectedSkills", ""));
   const highlightSelectedSkills = config.get<boolean>("prompt.highlightSelectedSkills", false);
-  const useCustomPrompt = config.get<boolean>("prompt.useCustomPrompt", false);
-  const customPrompt = config.get<string>("prompt.customPrompt", "");
+  const useCustomPrompt = config.get<boolean>("prompt.customPrompt", false);
+  const customPrompt = config.get<string>("prompt.customPromptText", "");
   const { command, args, promptTransport } = resolveAnalyzer(analyzerPreset, customCommand, customInput);
   const promptTemplate =
     useCustomPrompt && customPrompt.trim().length > 0 ? customPrompt : DEFAULT_PROMPT_TEMPLATE;

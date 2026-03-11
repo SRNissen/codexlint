@@ -87,12 +87,12 @@
             "default": "",
             "description": "Comma-separated or newline-separated skill names to highlight in the prompt."
           },
-          "codexlint.prompt.useCustomPrompt": {
+          "codexlint.prompt.customPrompt": {
             "type": "boolean",
             "default": false,
             "description": "Use a custom prompt template. See README.md for template guidance."
           },
-          "codexlint.prompt.customPrompt": {
+          "codexlint.prompt.customPromptText": {
             "type": "string",
             "default": "",
             "description": "Custom prompt template. Ignored unless Use Custom Prompt is enabled."
