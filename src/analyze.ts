@@ -37,12 +37,17 @@ function buildPrompt(
   const fileText = document.getText();
   const selectedSkills =
     cfg.selectedSkills.length === 0
-      ? "- (none selected)"
+      ? ""
       : cfg.selectedSkills.map((skill) => `- ${skill}`).join("\n");
+  const selectedSkillsBlock =
+    selectedSkills.length > 0
+      ? ["", "Selected skills to highlight (informational only):", selectedSkills].join("\n")
+      : "";
   const requestTemplate = renderTemplate(cfg.promptTemplate, {
     filePath,
     fileLanguage,
-    selectedSkills
+    selectedSkills,
+    selectedSkillsBlock
   });
   const analysisPrompt = requestTemplate.split("{{fileText}}").join(fileText);
 
