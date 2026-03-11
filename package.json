@@ -139,6 +139,7 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.25.10",
     "eslint": "^10.0.2",
     "typescript": "^5.9.3"
   },
@@ -152,7 +153,7 @@
     "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
     "compile": "npm run compile:extension && npm run compile:test",
     "compile:test": "node -e \"fs.rmSync('out/test',{recursive:true,force:true})\" && tsc -p ./tsconfig.test.json",
-    "compile:extension": "tsc -p ./",
+    "compile:extension": "tsc -p ./ --noEmit && esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap",
     "watch": "npm run watch:extension",
     "watch:extension": "tsc -watch -p ./",
     "lint": "eslint \"src/**/*.ts\"",
