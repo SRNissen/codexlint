@@ -50,10 +50,19 @@ async function runAnalysisForDocument(
   resources.diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
-    const findings = await analyzeSavedDocument(document, cfg);
+    const [requestTemplate, responseText, findings] = await analyzeSavedDocument(document, cfg);
 
     if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
       return;
+    }
+
+    if (cfg.showDebugIO) {
+      resources.output.appendLine(
+        `[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer request template (file content redacted)`
+      );
+      resources.output.appendLine(requestTemplate);
+      resources.output.appendLine(`[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer response text`);
+      resources.output.appendLine(responseText);
     }
 
     const nextDiagnostics = findings.map((finding) => toDiagnostic(document, finding));

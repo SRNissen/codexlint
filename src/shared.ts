@@ -41,6 +41,7 @@ export interface CodexLintConfig {
   debounceMs: number;
   maxFileBytes: number;
   skipBinaryFiles: boolean;
+  showDebugIO: boolean;
   analysisCommand: string;
   analysisArgs: string[];
   promptTransport: PromptTransport;
@@ -79,6 +80,7 @@ export function getConfig(): CodexLintConfig {
     debounceMs: config.get<number>("operation.debounceMs", DEFAULT_DEBOUNCE_MS),
     maxFileBytes: config.get<number>("operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
     skipBinaryFiles: config.get<boolean>("operation.skipBinaryFiles", true),
+    showDebugIO: config.get<boolean>("operation.showDebugIO", false),
     analysisCommand: command,
     analysisArgs: args,
     promptTransport,

@@ -136,6 +136,11 @@
             "type": "boolean",
             "default": false,
             "description": "Show the 'codexlint: Debug Environment' command in the Command Palette."
+          },
+          "codexlint.operation.showDebugIO": {
+            "type": "boolean",
+            "default": false,
+            "description": "Log analyzer request/response text to the codexlint output channel. Request logs omit file content."
           }
         }
       }

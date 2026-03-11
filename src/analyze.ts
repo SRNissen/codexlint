@@ -1,13 +1,19 @@
 import * as vscode from "vscode";
 import { type CodexFinding, type CodexLintConfig, runProcessWithTimeout } from "./shared.js";
 
+export type AnalyzeSavedDocumentResult = [
+  requestTemplate: string,
+  responseText: string,
+  findings: CodexFinding[]
+];
+
 export async function analyzeSavedDocument(
   document: vscode.TextDocument,
   cfg: CodexLintConfig
-): Promise<CodexFinding[]> {
+): Promise<AnalyzeSavedDocumentResult> {
   const prompt = buildPrompt(document, cfg);
-  const args = buildCommandArgs(cfg, prompt);
-  const stdin = shouldWritePromptToStdin(cfg) ? prompt : "";
+  const args = buildCommandArgs(cfg, prompt.analysisPrompt);
+  const stdin = shouldWritePromptToStdin(cfg) ? prompt.analysisPrompt : "";
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
   const cwd = workspaceFolder?.uri.fsPath;
   const stdout = await runProcessWithTimeout({
@@ -17,11 +23,15 @@ export async function analyzeSavedDocument(
     timeoutMs: cfg.timeoutMs,
     cwd
   });
+  const findings = parseFindings(stdout);
 
-  return parseFindings(stdout);
+  return [prompt.requestTemplate, stdout, findings];
 }
 
-function buildPrompt(document: vscode.TextDocument, cfg: CodexLintConfig): string {
+function buildPrompt(
+  document: vscode.TextDocument,
+  cfg: CodexLintConfig
+): { requestTemplate: string; analysisPrompt: string } {
   const filePath = document.uri.fsPath;
   const fileLanguage = document.languageId;
   const fileText = document.getText();
@@ -29,13 +39,14 @@ function buildPrompt(document: vscode.TextDocument, cfg: CodexLintConfig): strin
     cfg.selectedSkills.length === 0
       ? "- (none selected)"
       : cfg.selectedSkills.map((skill) => `- ${skill}`).join("\n");
-
-  return renderTemplate(cfg.promptTemplate, {
+  const requestTemplate = renderTemplate(cfg.promptTemplate, {
     filePath,
     fileLanguage,
-    fileText,
     selectedSkills
   });
+  const analysisPrompt = requestTemplate.split("{{fileText}}").join(fileText);
+
+  return { requestTemplate, analysisPrompt };
 }
 
 function buildCommandArgs(cfg: CodexLintConfig, prompt: string): string[] {
