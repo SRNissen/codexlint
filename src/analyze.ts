@@ -1,55 +1,61 @@
 import * as vscode from "vscode";
 import { type CodexFinding, type CodexLintConfig, runProcessWithTimeout } from "./shared.js";
 
-export async function analyzeSavedDocument(
+export type AnalyzeSavedDocumentResult = [
+  requestTemplate: Promise<string>,
+  responseText: Promise<string>,
+  findings: Promise<CodexFinding[]>
+];
+
+export function analyzeSavedDocument(
   document: vscode.TextDocument,
   cfg: CodexLintConfig
-): Promise<CodexFinding[]> {
+): AnalyzeSavedDocumentResult {
   const prompt = buildPrompt(document, cfg);
-  const args = buildCommandArgs(cfg, prompt);
-  const stdin = shouldWritePromptToStdin(cfg) ? prompt : "";
+  const args = buildCommandArgs(cfg, prompt.analysisPrompt);
+  const stdin = shouldWritePromptToStdin(cfg) ? prompt.analysisPrompt : "";
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
   const cwd = workspaceFolder?.uri.fsPath;
-  const stdout = await runProcessWithTimeout({
-    command: cfg.codexCommand,
+  const responseText = runProcessWithTimeout({
+    command: cfg.analysisCommand,
     args,
     stdin,
     timeoutMs: cfg.timeoutMs,
     cwd
   });
+  const findings = responseText.then((output) => parseFindings(output));
 
-  return parseFindings(stdout);
+  return [Promise.resolve(prompt.requestTemplate), responseText, findings];
 }
 
-function buildPrompt(document: vscode.TextDocument, cfg: CodexLintConfig): string {
+function buildPrompt(
+  document: vscode.TextDocument,
+  cfg: CodexLintConfig
+): { requestTemplate: string; analysisPrompt: string } {
   const filePath = document.uri.fsPath;
   const fileLanguage = document.languageId;
   const fileText = document.getText();
-  const skillsList =
-    cfg.codexSkills.length === 0
-      ? "- (none configured)"
-      : cfg.codexSkills.map((skill) => `- ${skill}`).join("\n");
-
-  return renderTemplate(cfg.promptTemplate, {
+  const selectedSkills =
+    cfg.selectedSkills.length === 0
+      ? ""
+      : cfg.selectedSkills.map((skill) => `- ${skill}`).join("\n");
+  const selectedSkillsBlock =
+    selectedSkills.length > 0
+      ? ["", "Selected skills to highlight (informational only):", selectedSkills].join("\n")
+      : "";
+  const requestTemplate = renderTemplate(cfg.promptTemplate, {
     filePath,
     fileLanguage,
-    fileText,
-    skillsList
+    selectedSkills,
+    selectedSkillsBlock
   });
+  const analysisPrompt = requestTemplate.split("{{fileText}}").join(fileText);
+
+  return { requestTemplate, analysisPrompt };
 }
 
 function buildCommandArgs(cfg: CodexLintConfig, prompt: string): string[] {
-  const args = [...cfg.codexArgs];
-
-  if (cfg.codexModel.length > 0 && cfg.codexModelArg.length > 0) {
-    args.push(cfg.codexModelArg, cfg.codexModel);
-  }
-
-  if (cfg.codexSkillArg.length > 0) {
-    for (const skill of cfg.codexSkills) {
-      args.push(cfg.codexSkillArg, skill);
-    }
-  }
+  const args = [...cfg.analysisArgs];
 
   if (shouldPassPromptAsArg(cfg)) {
     args.push(prompt);
@@ -59,11 +65,11 @@ function buildCommandArgs(cfg: CodexLintConfig, prompt: string): string[] {
 }
 
 function shouldPassPromptAsArg(cfg: CodexLintConfig): boolean {
-  return cfg.promptTransport === "arg" || cfg.promptTransport === "stdinAndArg";
+  return cfg.promptTransport === "arg";
 }
 
 function shouldWritePromptToStdin(cfg: CodexLintConfig): boolean {
-  return cfg.promptTransport === "stdin" || cfg.promptTransport === "stdinAndArg";
+  return cfg.promptTransport === "stdin";
 }
 
 function renderTemplate(template: string, values: Record<string, string>): string {
@@ -144,10 +150,10 @@ function toPositiveInt(value: unknown, fallback: number): number {
   return rounded > 0 ? rounded : fallback;
 }
 
-function parseJsonLenient(raw: string): unknown {
+export function parseJsonLenient(raw: string): unknown {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
-    throw new Error("analysis command returned empty output");
+    return buildParserFailureResult("analysis command returned empty output");
   }
 
   try {
@@ -156,9 +162,19 @@ function parseJsonLenient(raw: string): unknown {
     // Continue to fallback parsers.
   }
 
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  const fencedJson = fenced?.[1];
-  if (typeof fencedJson === "string") {
+  const fenceStart = trimmed.indexOf("```");
+  const fenceEnd = trimmed.lastIndexOf("```");
+  if (fenceStart >= 0 && fenceEnd > fenceStart) {
+    let fencedJson = trimmed.slice(fenceStart + 3, fenceEnd).trim();
+
+    const firstLineBreak = fencedJson.indexOf("\n");
+    if (firstLineBreak >= 0) {
+      const maybeLanguage = fencedJson.slice(0, firstLineBreak).trim().toLowerCase();
+      if (maybeLanguage === "json") {
+        fencedJson = fencedJson.slice(firstLineBreak + 1).trim();
+      }
+    }
+
     try {
       return JSON.parse(fencedJson);
     } catch {
@@ -186,9 +202,29 @@ function parseJsonLenient(raw: string): unknown {
     }
   }
 
-  throw new Error("analysis command returned non-JSON output");
+  return buildParserFailureResult("analysis command returned non-JSON output", trimmed);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+
+function buildParserFailureResult(reason: string, rawOutput?: string): unknown {
+  const rawSummary =
+    rawOutput === undefined || rawOutput.length === 0
+      ? ""
+      : ` Raw output (truncated): ${rawOutput.slice(0, 500)}`;
+
+  return {
+    findings: [
+      {
+        message: `${reason}.${rawSummary}`,
+        severity: "warning",
+        line: 1,
+        column: 1,
+        endLine: 1,
+        endColumn: 1
+      }
+    ]
+  };
 }

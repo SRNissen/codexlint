@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { spawn } from "node:child_process";
+import { parseArgsStringToArgv } from "string-argv";
 
 export const EXTENSION_NAME = "codexlint";
 export const DEFAULT_DEBOUNCE_MS = 750;
@@ -22,9 +23,7 @@ export const DEFAULT_PROMPT_TEMPLATE = [
   "    }",
   "  ]",
   "}",
-  "",
-  "Enabled skills:",
-  "{{skillsList}}",
+  "{{selectedSkillsBlock}}",
   "",
   "File path: {{filePath}}",
   "Language: {{fileLanguage}}",
@@ -32,21 +31,20 @@ export const DEFAULT_PROMPT_TEMPLATE = [
   "{{fileText}}"
 ].join("\n");
 
-export type PromptTransport = "stdin" | "arg" | "stdinAndArg";
+export type AnalyzerPreset = "codexExec" | "claudeP" | "custom";
+export type PromptTransport = "stdin" | "arg";
 
 export interface CodexLintConfig {
   enabled: boolean;
   debounceMs: number;
   maxFileBytes: number;
   skipBinaryFiles: boolean;
-  codexCommand: string;
-  codexArgs: string[];
-  codexModel: string;
-  codexModelArg: string;
-  codexSkills: string[];
-  codexSkillArg: string;
+  showDebugIO: boolean;
+  analysisCommand: string;
+  analysisArgs: string[];
   promptTransport: PromptTransport;
   promptTemplate: string;
+  selectedSkills: string[];
   timeoutMs: number;
 }
 
@@ -62,33 +60,75 @@ export interface CodexFinding {
 
 export function getConfig(): CodexLintConfig {
   const config = vscode.workspace.getConfiguration("codexlint");
-  const codexArgs = config.get<string[]>("codex.args", ["exec"]);
-  const codexSkills = config.get<string[]>("codex.skills", []);
-  const promptTransport = config.get<PromptTransport>("codex.promptTransport", "stdinAndArg");
+  const analyzerPreset = normalizeAnalyzerPreset(
+    config.get<AnalyzerPreset>("analyzer.command", "codexExec")
+  );
+  const customCommand = config.get<string>("analyzer.customCommand", "");
+  const customInput = normalizePromptTransport(config.get<PromptTransport>("analyzer.customInput", "arg"));
+  const selectedSkills = parseSelectedSkills(config.get<string>("prompt.selectedSkills", ""));
+  const highlightSelectedSkills = config.get<boolean>("prompt.highlightSelectedSkills", false);
+  const useCustomPrompt = config.get<boolean>("prompt.customPrompt", false);
+  const customPrompt = config.get<string>("prompt.customPromptText", "");
+  const { command, args, promptTransport } = resolveAnalyzer(analyzerPreset, customCommand, customInput);
+  const promptTemplate =
+    useCustomPrompt && customPrompt.trim().length > 0 ? customPrompt : DEFAULT_PROMPT_TEMPLATE;
+
   return {
-    enabled: config.get<boolean>("onSave.enabled", true),
-    debounceMs: config.get<number>("onSave.debounceMs", DEFAULT_DEBOUNCE_MS),
-    maxFileBytes: config.get<number>("onSave.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
-    skipBinaryFiles: config.get<boolean>("onSave.skipBinaryFiles", true),
-    codexCommand: config.get<string>("codex.command", "codex"),
-    codexArgs: Array.isArray(codexArgs) ? codexArgs : ["exec"],
-    codexModel: config.get<string>("codex.model", "").trim(),
-    codexModelArg: config.get<string>("codex.modelArg", "--model").trim(),
-    codexSkills: Array.isArray(codexSkills)
-      ? codexSkills.map((skill) => skill.trim()).filter((skill) => skill.length > 0)
-      : [],
-    codexSkillArg: config.get<string>("codex.skillArg", "--skill").trim(),
-    promptTransport: normalizePromptTransport(promptTransport),
-    promptTemplate: config.get<string>("codex.promptTemplate", DEFAULT_PROMPT_TEMPLATE),
-    timeoutMs: config.get<number>("codex.timeoutMs", DEFAULT_TIMEOUT_MS)
+    enabled: config.get<boolean>("operation.enabled", true),
+    debounceMs: config.get<number>("operation.debounceMs", DEFAULT_DEBOUNCE_MS),
+    maxFileBytes: config.get<number>("operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
+    skipBinaryFiles: config.get<boolean>("operation.skipBinaryFiles", true),
+    showDebugIO: config.get<boolean>("operation.showDebugIO", false),
+    analysisCommand: command,
+    analysisArgs: args,
+    promptTransport,
+    promptTemplate,
+    selectedSkills: highlightSelectedSkills ? selectedSkills : [],
+    timeoutMs: config.get<number>("operation.timeoutMs", DEFAULT_TIMEOUT_MS)
   };
 }
 
 function normalizePromptTransport(value: unknown): PromptTransport {
-  if (value === "stdin" || value === "arg" || value === "stdinAndArg") {
+  if (value === "stdin" || value === "arg") {
     return value;
   }
-  return "stdinAndArg";
+  return "arg";
+}
+
+function normalizeAnalyzerPreset(value: unknown): AnalyzerPreset {
+  if (value === "codexExec" || value === "claudeP" || value === "custom") {
+    return value;
+  }
+  return "codexExec";
+}
+
+function parseSelectedSkills(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+}
+
+function resolveAnalyzer(
+  preset: AnalyzerPreset,
+  customCommand: string,
+  customInput: PromptTransport
+): { command: string; args: string[]; promptTransport: PromptTransport } {
+  if (preset === "codexExec") {
+    return { command: "codex", args: ["exec"], promptTransport: "arg" };
+  }
+
+  if (preset === "claudeP") {
+    return { command: "claude", args: ["-p"], promptTransport: "arg" };
+  }
+
+  const parsed = parseArgsStringToArgv(customCommand.trim());
+  const [command, ...args] = parsed;
+  if (command === undefined) {
+    return { command: "", args: [], promptTransport: customInput };
+  }
+
+  return { command, args, promptTransport: customInput };
 }
 
 export function runProcessWithTimeout(options: {

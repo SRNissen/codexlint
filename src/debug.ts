@@ -1,10 +1,12 @@
 import * as vscode from "vscode";
 import { getConfig, runProcessWithTimeout, EXTENSION_NAME } from "./shared.js";
 
+const SHOW_DEBUG_COMMAND_CONTEXT = "codexlint.showDebugEnvironmentCommand";
+
 export function printEnv(output: vscode.OutputChannel) {
   const pathValue = process.env.PATH ?? "(undefined)";
   const executablePath = process.execPath;
-  const configuredCommand = getConfig().codexCommand;
+  const configuredCommand = getConfig().analysisCommand;
   const nodePath = process.env.NODE ?? "(undefined)";
   const lookupCommand = process.platform === "win32" ? "where" : "which";
 
@@ -49,4 +51,11 @@ export function printEnv(output: vscode.OutputChannel) {
     });
 
   output.show(true);
+}
+
+export async function updateDebugCommandVisibility(): Promise<void> {
+  const isVisible = vscode.workspace
+    .getConfiguration("codexlint")
+    .get<boolean>("operation.showDebugCommand", false);
+  await vscode.commands.executeCommand("setContext", SHOW_DEBUG_COMMAND_CONTEXT, isVisible);
 }

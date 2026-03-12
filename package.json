@@ -29,92 +29,122 @@
         "title": "codexlint: Debug Environment"
       }
     ],
-    "configuration": {
-      "title": "codexlint",
-      "properties": {
-        "codexlint.onSave.enabled": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run codexlint security analysis when a file is saved."
-        },
-        "codexlint.onSave.debounceMs": {
-          "type": "number",
-          "default": 750,
-          "minimum": 0,
-          "description": "Delay before launching analysis after save."
-        },
-        "codexlint.onSave.maxFileBytes": {
-          "type": "number",
-          "default": 1000000,
-          "minimum": 1,
-          "description": "Skip files larger than this size in bytes."
-        },
-        "codexlint.onSave.skipBinaryFiles": {
-          "type": "boolean",
-          "default": true,
-          "description": "Skip files that look binary."
-        },
-        "codexlint.codex.command": {
-          "type": "string",
-          "default": "codex",
-          "description": "Executable used to run codex analysis."
-        },
-        "codexlint.codex.args": {
-          "type": "array",
-          "default": [
-            "exec"
-          ],
-          "items": {
-            "type": "string"
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "codexlint.debugEnvironment",
+          "when": "codexlint.showDebugEnvironmentCommand"
+        }
+      ]
+    },
+    "configuration": [
+      {
+        "title": "Analyzer Selection",
+        "properties": {
+          "codexlint.analyzer.command": {
+            "type": "string",
+            "default": "codexExec",
+            "enum": [
+              "codexExec",
+              "claudeP",
+              "custom"
+            ],
+            "enumItemLabels": [
+              "codex exec",
+              "claude -p",
+              "custom"
+            ],
+            "description": "Choose which analyzer command preset to run."
           },
-          "description": "Base arguments passed to the configured analysis command before model/skill arguments and prompt injection."
-        },
-        "codexlint.codex.model": {
-          "type": "string",
-          "default": "",
-          "description": "Optional model identifier. Leave empty to let the CLI/tool default decide."
-        },
-        "codexlint.codex.modelArg": {
-          "type": "string",
-          "default": "--model",
-          "description": "Flag used to pass codexlint.codex.model to the analysis command."
-        },
-        "codexlint.codex.skills": {
-          "type": "array",
-          "default": [],
-          "items": {
-            "type": "string"
+          "codexlint.analyzer.customCommand": {
+            "type": "string",
+            "default": "",
+            "description": "Custom analyzer command text, for example: codex exec --model gpt-5. Ignored unless Analyzer Command is set to custom."
           },
-          "description": "Optional list of skills to pass to the analysis command (one flag per entry). Also available in prompt via {{skillsList}}."
-        },
-        "codexlint.codex.skillArg": {
-          "type": "string",
-          "default": "--skill",
-          "description": "Flag used to pass each skill from codexlint.codex.skills."
-        },
-        "codexlint.codex.promptTransport": {
-          "type": "string",
-          "default": "stdinAndArg",
-          "enum": [
-            "stdin",
-            "arg",
-            "stdinAndArg"
-          ],
-          "description": "How the rendered prompt is passed to the analysis command."
-        },
-        "codexlint.codex.promptTemplate": {
-          "type": "string",
-          "default": "You are a static security reviewer for a single source file.\nAnalyze only the file content provided below.\nReturn JSON only.\nOutput schema:\n{\n  \"findings\": [\n    {\n      \"message\": \"string\",\n      \"severity\": \"error|warning|info\",\n      \"line\": 1,\n      \"column\": 1,\n      \"endLine\": 1,\n      \"endColumn\": 1,\n    }\n  ]\n}\n\nEnabled skills:\n{{skillsList}}\n\nFile path: {{filePath}}\nLanguage: {{fileLanguage}}\nFile content:\n{{fileText}}",
-          "description": "Prompt template. Supported tokens: {{filePath}}, {{fileLanguage}}, {{fileText}}, {{skillsList}}."
-        },
-        "codexlint.codex.timeoutMs": {
-          "type": "number",
-          "default": 120000,
-          "minimum": 1,
-          "description": "Maximum time to wait for analysis command output."
+          "codexlint.analyzer.customInput": {
+            "type": "string",
+            "default": "arg",
+            "enum": [
+              "arg",
+              "stdin"
+            ],
+            "enumItemLabels": [
+              "pass files as arg",
+              "pass files as stdin"
+            ],
+            "description": "How codexlint passes prompt text to a custom analyzer command. Ignored for codex exec and claude -p presets."
+          }
+        }
+      },
+      {
+        "title": "Prompt",
+        "properties": {
+          "codexlint.prompt.highlightSelectedSkills": {
+            "type": "boolean",
+            "default": false,
+            "description": "Highlight selected skill names in the prompt text. Models can still access all skills regardless of this setting."
+          },
+          "codexlint.prompt.selectedSkills": {
+            "type": "string",
+            "default": "",
+            "description": "Comma-separated or newline-separated skill names to highlight in the prompt."
+          },
+          "codexlint.prompt.customPrompt": {
+            "type": "boolean",
+            "default": false,
+            "description": "Use a custom prompt template. See README.md for template guidance."
+          },
+          "codexlint.prompt.customPromptText": {
+            "type": "string",
+            "default": "",
+            "description": "Custom prompt template. Ignored unless Use Custom Prompt is enabled."
+          }
+        }
+      },
+      {
+        "title": "Operation",
+        "properties": {
+          "codexlint.operation.enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Run codexlint security analysis when a file is saved."
+          },
+          "codexlint.operation.debounceMs": {
+            "type": "number",
+            "default": 750,
+            "minimum": 0,
+            "description": "Delay before launching analysis after save."
+          },
+          "codexlint.operation.maxFileBytes": {
+            "type": "number",
+            "default": 1000000,
+            "minimum": 1,
+            "description": "Skip files larger than this size in bytes."
+          },
+          "codexlint.operation.skipBinaryFiles": {
+            "type": "boolean",
+            "default": true,
+            "description": "Skip files that look binary."
+          },
+          "codexlint.operation.timeoutMs": {
+            "type": "number",
+            "default": 120000,
+            "minimum": 1,
+            "description": "Maximum time to wait for analyzer output."
+          },
+          "codexlint.operation.showDebugCommand": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show the 'codexlint: Debug Environment' command in the Command Palette."
+          },
+          "codexlint.operation.showDebugIO": {
+            "type": "boolean",
+            "default": false,
+            "description": "Log analyzer request/response text to the codexlint output channel. Request logs omit file content."
+          }
         }
       }
-    }
+    ]
   },
   "activationEvents": [
     "onStartupFinished"
@@ -127,21 +157,25 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.25.10",
     "eslint": "^10.0.2",
     "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "string-argv": "^0.3.2"
   },
   "scripts": {
     "build": "npm run build:release",
     "build:release": "npm run build:verify && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
     "build:verify": "npm run build:clean && npm run lint && npm run test",
     "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
-    "compile": "npm run compile:extension && npm run compile:test",
-    "compile:test": "tsc -p ./tsconfig.test.json",
-    "compile:extension": "tsc -p ./",
+    "compile": "npm run lint && npm run compile:extension && npm run compile:test",
+    "compile:test": "node -e \"fs.rmSync('out/test',{recursive:true,force:true})\" && tsc -p ./tsconfig.test.json",
+    "compile:extension": "tsc -p ./ --noEmit && esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap",
     "watch": "npm run watch:extension",
     "watch:extension": "tsc -watch -p ./",
     "lint": "eslint \"src/**/*.ts\"",
-    "test:setup": "npm run compile && node -e \"fs.mkdirSync('test-workspace',{recursive:true})\"",
+    "test:setup": "npm audit --omit=dev && npm run compile && node -e \"fs.mkdirSync('test-workspace',{recursive:true})\"",
     "test:teardown": "node -e \"fs.rmSync('test-workspace',{recursive:true,force:true})\"",
     "test": "npm run test:setup && vscode-test && npm run test:teardown"
   },

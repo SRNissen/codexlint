@@ -1,7 +1,9 @@
 import * as vscode from "vscode";
-import { printEnv } from "./debug.js";
+import { printEnv, updateDebugCommandVisibility } from "./debug.js";
 import { onSave, type SaveResources } from "./saveCoordinator.js";
 import { EXTENSION_NAME } from "./shared.js";
+
+const SHOW_DEBUG_COMMAND_SETTING = "codexlint.operation.showDebugCommand";
 
 export function activate(context: vscode.ExtensionContext): void {
   const resources = createResources();
@@ -13,9 +15,17 @@ export function activate(context: vscode.ExtensionContext): void {
     "codexlint.debugEnvironment",
     () => printEnv(resources.output)
   );
+  const configurationHandler = vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration(SHOW_DEBUG_COMMAND_SETTING)) {
+      void updateDebugCommandVisibility();
+    }
+  });
+
+  void updateDebugCommandVisibility();
 
   context.subscriptions.push(
     saveHandler,
+    configurationHandler,
     debugEnvironment,
     resources
   );

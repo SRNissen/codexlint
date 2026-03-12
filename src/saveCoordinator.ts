@@ -50,13 +50,45 @@ async function runAnalysisForDocument(
   resources.diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
-    const findings = await analyzeSavedDocument(document, cfg);
+    const [requestTemplate, responseText, findings] = analyzeSavedDocument(document, cfg);
+
+    if (cfg.showDebugIO) {
+      void requestTemplate
+        .then((requestText) => {
+          if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
+            return;
+          }
+          resources.output.appendLine(
+            `[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer request template (file content redacted)`
+          );
+          resources.output.appendLine(requestText);
+        })
+        .catch((error) => {
+          console.error(`[${EXTENSION_NAME}] failed to log analyzer request template`, error);
+        });
+
+      void responseText
+        .then((responseLogText) => {
+          if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
+            return;
+          }
+          resources.output.appendLine(
+            `[${EXTENSION_NAME}] ${document.uri.fsPath}: analyzer response text`
+          );
+          resources.output.appendLine(responseLogText);
+        })
+        .catch((error) => {
+          console.error(`[${EXTENSION_NAME}] failed to log analyzer response text`, error);
+        });
+    }
+
+    const resolvedFindings = await findings;
 
     if (resources.runSequenceByUri.get(uriKey) !== runSequence) {
       return;
     }
 
-    const nextDiagnostics = findings.map((finding) => toDiagnostic(document, finding));
+    const nextDiagnostics = resolvedFindings.map((finding) => toDiagnostic(document, finding));
     if (nextDiagnostics.length === 0) {
       resources.diagnostics.delete(document.uri);
       return;
