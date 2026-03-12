@@ -50,7 +50,7 @@ async function runAnalysisForDocument(
   resources.diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
-    const [requestTemplate, responseText, findings] = await analyzeSavedDocument(document, cfg);
+    const [requestTemplate, responseText, findings] = analyzeSavedDocument(document, cfg);
 
     if (cfg.showDebugIO) {
       void requestTemplate

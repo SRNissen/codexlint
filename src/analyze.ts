@@ -7,10 +7,10 @@ export type AnalyzeSavedDocumentResult = [
   findings: Promise<CodexFinding[]>
 ];
 
-export async function analyzeSavedDocument(
+export function analyzeSavedDocument(
   document: vscode.TextDocument,
   cfg: CodexLintConfig
-): Promise<AnalyzeSavedDocumentResult> {
+): AnalyzeSavedDocumentResult {
   const prompt = buildPrompt(document, cfg);
   const args = buildCommandArgs(cfg, prompt.analysisPrompt);
   const stdin = shouldWritePromptToStdin(cfg) ? prompt.analysisPrompt : "";

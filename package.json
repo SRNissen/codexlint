@@ -169,7 +169,7 @@
     "build:release": "npm run build:verify && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
     "build:verify": "npm run build:clean && npm run lint && npm run test",
     "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
-    "compile": "npm run compile:extension && npm run compile:test",
+    "compile": "npm run lint && npm run compile:extension && npm run compile:test",
     "compile:test": "node -e \"fs.rmSync('out/test',{recursive:true,force:true})\" && tsc -p ./tsconfig.test.json",
     "compile:extension": "tsc -p ./ --noEmit && esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap",
     "watch": "npm run watch:extension",
