@@ -1,7 +1,7 @@
 {
   "name": "codexlint",
   "displayName": "codexlint",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "SRNissen",
   "description": "Lint with Codex CLI",
   "author": "SRNissen",
