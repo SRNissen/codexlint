@@ -12,6 +12,7 @@
 !.prettierrc.json
 !.vscodeignore
 !AGENTS.md
+!CONSIDERATIONS.md
 !.eslint.config.js
 !package-lock.json
 !package.json

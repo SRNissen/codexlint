@@ -42,3 +42,11 @@ This command is useful for local troubleshooting, but is subject to change or re
 ## Recommended near-term work
 
 The README.md file contains a roadmap. Contributions within the roadmap will be given serious consideration. Contributions outside the roadmap are likely to be ignored.
+
+## CONSIDERATIONS.md
+
+There should be a file "CONSIDERATIONS.md" or, if there isn't, you are encouraged to create such a file.
+
+The purpose of the file is to be a living history of the project - which tradeoffs were considered, and what direction they were decided. Which goals to work on, and in which order.
+
+Feel free to concatenate anything relevant to the file.
