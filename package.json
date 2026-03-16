@@ -115,6 +115,12 @@
             "minimum": 0,
             "description": "Delay before launching analysis after save."
           },
+          "codexlint.operation.minFileReanalyzeMs": {
+            "type": "number",
+            "default": 300000,
+            "minimum": 0,
+            "description": "Minimum time in milliseconds before rerunning analysis for the same file."
+          },
           "codexlint.operation.maxFileBytes": {
             "type": "number",
             "default": 1000000,

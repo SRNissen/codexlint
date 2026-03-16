@@ -4,6 +4,7 @@ import { parseArgsStringToArgv } from "string-argv";
 
 export const EXTENSION_NAME = "codexlint";
 export const DEFAULT_DEBOUNCE_MS = 750;
+export const DEFAULT_MIN_FILE_REANALYZE_MS = 300_000;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 export const DEFAULT_PROMPT_TEMPLATE = [
@@ -37,6 +38,7 @@ export type PromptTransport = "stdin" | "arg";
 export interface CodexLintConfig {
   enabled: boolean;
   debounceMs: number;
+  minFileReanalyzeMs: number;
   maxFileBytes: number;
   skipBinaryFiles: boolean;
   showDebugIO: boolean;
@@ -76,6 +78,10 @@ export function getConfig(): CodexLintConfig {
   return {
     enabled: config.get<boolean>("operation.enabled", true),
     debounceMs: config.get<number>("operation.debounceMs", DEFAULT_DEBOUNCE_MS),
+    minFileReanalyzeMs: Math.max(
+      0,
+      config.get<number>("operation.minFileReanalyzeMs", DEFAULT_MIN_FILE_REANALYZE_MS)
+    ),
     maxFileBytes: config.get<number>("operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
     skipBinaryFiles: config.get<boolean>("operation.skipBinaryFiles", true),
     showDebugIO: config.get<boolean>("operation.showDebugIO", false),

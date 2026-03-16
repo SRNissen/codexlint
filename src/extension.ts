@@ -40,18 +40,21 @@ function createResources(): ExtensionResources {
   const output = vscode.window.createOutputChannel(EXTENSION_NAME);
   const pendingByUri = new Map<string, ReturnType<typeof setTimeout>>();
   const runSequenceByUri = new Map<string, number>();
+  const lastAnalysisAtByUri = new Map<string, number>();
 
   return {
     diagnostics,
     output,
     pendingByUri,
     runSequenceByUri,
+    lastAnalysisAtByUri,
     dispose: () => {
       for (const handle of pendingByUri.values()) {
         clearTimeout(handle);
       }
       pendingByUri.clear();
       runSequenceByUri.clear();
+      lastAnalysisAtByUri.clear();
       diagnostics.dispose();
       output.dispose();
     }

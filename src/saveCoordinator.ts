@@ -9,6 +9,7 @@ export interface SaveResources {
   output: vscode.OutputChannel;
   pendingByUri: Map<string, ReturnType<typeof setTimeout>>;
   runSequenceByUri: Map<string, number>;
+  lastAnalysisAtByUri: Map<string, number>;
 }
 
 export function onSave(document: vscode.TextDocument, resources: SaveResources): void {
@@ -18,6 +19,14 @@ export function onSave(document: vscode.TextDocument, resources: SaveResources):
   }
 
   const uriKey = document.uri.toString();
+  const lastAnalysisAt = resources.lastAnalysisAtByUri.get(uriKey);
+  if (
+    lastAnalysisAt !== undefined &&
+    Date.now() - lastAnalysisAt < Math.max(0, cfg.minFileReanalyzeMs)
+  ) {
+    return;
+  }
+
   const nextSequence = (resources.runSequenceByUri.get(uriKey) ?? 0) + 1;
   resources.runSequenceByUri.set(uriKey, nextSequence);
 
@@ -47,6 +56,7 @@ async function runAnalysisForDocument(
     return;
   }
 
+  resources.lastAnalysisAtByUri.set(uriKey, Date.now());
   resources.diagnostics.set(document.uri, [createAnalyzingDiagnostic(document)]);
 
   try {
