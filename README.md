@@ -8,15 +8,10 @@ The current state of the extension is: Ready for use, with room for improvement 
 
 ### Roadmap
 
-1. Expand tests to cover core security-analysis behavior:
-   - prompt rendering and template substitution
-   - JSON/fenced-JSON parser behavior
-   - finding normalization and diagnostic range conversion
-   - save/debounce/skip logic for empty, oversized, and binary-like files
-2. Add explicit README documentation for custom prompt templates and configuration examples.
-3. Decide and document dependency advisory policy for dev dependencies, then align scripts (`npm audit` coverage) with that policy.
-4. Keep release metadata in sync on each release (`package.json` version and `CHANGELOG.md` entry).
-5. Clean up `.vscodeignore` to match existing files (remove stale entries, keep packaging intent explicit).
+- Better security
+- Better performance
+
+For a roadmap of known issues, see ROADMAP.md
 
 ## Credit
 
