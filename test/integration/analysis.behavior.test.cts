@@ -57,11 +57,12 @@ suite("analysis behavior", () => {
         const document = await vscode.workspace.openTextDocument(fileUri);
         await appendAndSave(document, "// save trigger 1\n");
 
-        await waitFor(async () => (await readCounter(counterPath)) === 1);
+        await waitFor(async () => (await readCounter(counterPath)) >= 1);
         await waitFor(
           () =>
             getCodexlintDiagnostics(fileUri).some((diagnostic) => diagnostic.code !== "analysis-in-progress")
         );
+        const invocationCountAfterFirstSave = await readCounter(counterPath);
 
         const diagnostic = getCodexlintDiagnostics(fileUri).find(
           (entry) => entry.code === "test-finding" && entry.message === "possible injection sink"
@@ -72,27 +73,11 @@ suite("analysis behavior", () => {
         assert.equal(diagnostic.code, "test-finding");
 
         await appendAndSave(document, "// save trigger 2\n");
-        await waitFor(async () => (await readCounter(counterPath)) === 1);
+        await assertCounterDoesNotIncrease(counterPath, invocationCountAfterFirstSave);
       }
     );
 
     await cleanupFiles(scriptPath, counterPath, filePath);
-  });
-
-  test("parseJsonLenient returns warning finding when output is not JSON", async () => {
-    const { parseJsonLenient } = await import("../../src/analyze.js");
-    const parsed = parseJsonLenient("this is not json output");
-    assert.equal(typeof parsed, "object");
-    assert.ok(parsed !== null, "expected parser result object");
-
-    const findings = (parsed as { findings?: unknown }).findings;
-    assert.ok(Array.isArray(findings), "expected findings array");
-    assert.equal(findings.length, 1);
-
-    const [entry] = findings as Array<{ message?: unknown; severity?: unknown }>;
-    assert.equal(typeof entry?.message, "string");
-    assert.match(String(entry?.message), /analysis command returned non-JSON output/i);
-    assert.equal(entry?.severity, "warning");
   });
 });
 
@@ -145,6 +130,23 @@ async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs?: numb
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
   }
   throw new Error(`timed out after ${effectiveTimeoutMs}ms waiting for condition`);
+}
+
+async function assertCounterDoesNotIncrease(
+  counterPath: string,
+  baselineCount: number,
+  windowMs = 2_000
+): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start <= windowMs) {
+    const currentCount = await readCounter(counterPath);
+    if (currentCount > baselineCount) {
+      throw new Error(
+        `expected no additional analyzer invocation during cooldown; baseline=${baselineCount}, current=${currentCount}`
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
 }
 
 function getDefaultWaitForMs(): number {

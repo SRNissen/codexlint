@@ -6,6 +6,6 @@
     "types": ["node", "mocha"],
     "verbatimModuleSyntax": false
   },
-  "include": ["test/integration/**/*.test.cts"],
+  "include": ["test/**/*.test.cts"],
   "exclude": ["node_modules", "out"]
 }
