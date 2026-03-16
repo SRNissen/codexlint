@@ -182,3 +182,24 @@ Hardening decision matrix (proposed defaults)
 - Consider user-side mapping for repo-specific prompt profiles (path/name keyed), stored outside repo settings.
 - This can preserve customization while avoiding repository-injected command/prompt control.
 - Follow-up required: decide if this is immediate scope or later enhancement.
+
+### 2026-03-16T14:20:00Z
+
+Analyzer process write-capability observations
+
+1) Extension-level "read-only behavior" test caveat
+- Current read-only integration test verifies that extension code does not directly edit files.
+- It does not by itself prove analyzer subprocess cannot write files.
+- In test host context, analyzer permissions may be implicitly more restricted than real user context.
+
+2) Codex CLI execution behavior
+- `codex exec "please add the word 'hey' to text.txt"` can write files when run in a trusted/writable Codex CLI context.
+- `codex exec --sandbox read-only "please add the word 'hey' to text.txt"` fails to write, which is desired for analyzer safety defaults.
+
+3) Hardening direction
+- Prefer explicit read-only analyzer execution defaults at process invocation level, not assumptions based on host context.
+- For Codex analyzer preset, evaluate defaulting to read-only sandbox args.
+
+4) Follow-up research item
+- Determine equivalent args/flags for `claude -p` to enforce read-only behavior (or nearest secure default).
+- Document capability gaps if strict read-only cannot be enforced for one analyzer family.
