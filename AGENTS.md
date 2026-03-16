@@ -49,4 +49,4 @@ There should be a file "CONSIDERATIONS.md" or, if there isn't, you are encourage
 
 The purpose of the file is to be a living history of the project - which tradeoffs were considered, and what direction they were decided. Which goals to work on, and in which order.
 
-Feel free to concatenate anything relevant to the file.
+Feel free to add anything relevant to the file, with a time stamp.
