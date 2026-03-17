@@ -121,7 +121,7 @@ async function writeClaudeWorkspacePermissions(workspacePath: string): Promise<v
   const settings = {
     defaultMode: "plan",
     permissions: {
-      allow: ["Bash", "Edit"]
+      allow: ["Bash", "Edit", "Write"]
     }
   };
 

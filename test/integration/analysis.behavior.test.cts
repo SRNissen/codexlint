@@ -11,9 +11,9 @@ suite("analysis behavior", () => {
     this.timeout(getDefaultWaitForMs() + 10_000);
 
     const workspacePath = getWorkspacePath();
-    const scriptPath = path.join(workspacePath, "test-analyzer-findings.cjs");
-    const counterPath = path.join(workspacePath, "test-analyzer-findings.count");
-    const filePath = path.join(workspacePath, "security-check-findings.ts");
+    const scriptPath = path.join(workspacePath, "findings-analyzer.cjs");
+    const counterPath = path.join(workspacePath, "findings-analyzer.count");
+    const filePath = path.join(workspacePath, "findings-target.ts");
     const fileUri = vscode.Uri.file(filePath);
 
     await writeFile(
@@ -77,7 +77,6 @@ suite("analysis behavior", () => {
       }
     );
 
-    await cleanupFiles(scriptPath, counterPath, filePath);
   });
 
   test("does not let a codex prompt mutate workspace files", async function () {
@@ -155,7 +154,6 @@ async function runWorkspaceMutationProbeTest(options: {
   const createPath = path.join(workspacePath, `${options.prefix}-target-create.txt`);
   const originalModifyContent = "original editable content\n";
   const originalDeleteContent = "original deletable content\n";
-  const claudeDir = path.join(workspacePath, ".claude");
 
   await writeFile(sourceFilePath, "const value = 1;\n", "utf8");
   await writeFile(modifyPath, originalModifyContent, "utf8");
@@ -166,40 +164,36 @@ async function runWorkspaceMutationProbeTest(options: {
     await copyClaudeWorkspacePermissionsFixture(workspacePath);
   }
 
-  try {
-    await withCodexlintConfig(
-      {
-        "analyzer.command": options.analyzerCommand,
-        "operation.enabled": true,
-        "operation.debounceMs": 0,
-        "operation.minFileReanalyzeMs": 0,
-        "operation.timeoutMs": 90_000,
-        "prompt.customPrompt": true,
-        "prompt.customPromptText": buildWorkspaceMutationProbePrompt({
-          modifyPath,
-          deletePath,
-          createPath
-        })
-      },
-      async () => {
-        const document = await vscode.workspace.openTextDocument(sourceFileUri);
-        await appendAndSave(document, "// save trigger mutation probe\n");
+  await withCodexlintConfig(
+    {
+      "analyzer.command": options.analyzerCommand,
+      "operation.enabled": true,
+      "operation.debounceMs": 0,
+      "operation.minFileReanalyzeMs": 0,
+      "operation.timeoutMs": 90_000,
+      "prompt.customPrompt": true,
+      "prompt.customPromptText": buildWorkspaceMutationProbePrompt({
+        modifyPath,
+        deletePath,
+        createPath
+      })
+    },
+    async () => {
+      const document = await vscode.workspace.openTextDocument(sourceFileUri);
+      await appendAndSave(document, "// save trigger mutation probe\n");
 
-        await waitForAnalysisCycle(sourceFileUri);
-        await assertWorkspaceWasNotMutated({
-          analyzerCommand: options.analyzerCommand,
-          fileUri: sourceFileUri,
-          modifyPath,
-          deletePath,
-          createPath,
-          originalModifyContent,
-          originalDeleteContent
-        });
-      }
-    );
-  } finally {
-    await cleanupFiles(sourceFilePath, modifyPath, deletePath, createPath, claudeDir);
-  }
+      await waitForAnalysisCycle(sourceFileUri);
+      await assertWorkspaceWasNotMutated({
+        analyzerCommand: options.analyzerCommand,
+        fileUri: sourceFileUri,
+        modifyPath,
+        deletePath,
+        createPath,
+        originalModifyContent,
+        originalDeleteContent
+      });
+    }
+  );
 }
 
 async function copyClaudeWorkspacePermissionsFixture(workspacePath: string): Promise<void> {
@@ -397,8 +391,4 @@ async function withCodexlintConfig(
       }
     }
   }
-}
-
-async function cleanupFiles(...files: string[]): Promise<void> {
-  await Promise.all(files.map((file) => rm(file, { recursive: true, force: true })));
 }

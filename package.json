@@ -182,7 +182,7 @@
     "watch:extension": "tsc -watch -p ./",
     "lint": "eslint \"src/**/*.ts\"",
     "test:unit": "node --test test/unit/**/*.test.mjs",
-    "test:integration:setup": "npm audit --omit=dev && npm run compile && node -e \"fs.mkdirSync('test-workspace',{recursive:true})\"",
+    "test:integration:setup": "npm audit --omit=dev && npm run compile && node -e \"fs.rmSync('test-workspace',{recursive:true,force:true}); fs.mkdirSync('test-workspace',{recursive:true})\"",
     "test:integration:teardown": "node -e \"fs.rmSync('test-workspace',{recursive:true,force:true})\"",
     "test:integration": "npm run test:integration:setup && vscode-test && npm run test:integration:teardown",
     "test": "npm run test:unit && npm run test:integration"
