@@ -1,0 +1,6 @@
+{
+    "defaultMode": "plan",
+    "permissions": {
+        "allow": ["Bash", "Edit", "Write"]
+    }
+}
