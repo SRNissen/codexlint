@@ -373,21 +373,21 @@ async function withCodexlintConfig(
   const previousValues = new Map<string, unknown>();
 
   for (const key of keys) {
-    previousValues.set(key, config.inspect(key)?.workspaceValue);
+    previousValues.set(key, config.inspect(key)?.globalValue);
   }
 
   try {
     for (const [key, value] of Object.entries(updates)) {
-      await config.update(key, value, vscode.ConfigurationTarget.Workspace);
+      await config.update(key, value, vscode.ConfigurationTarget.Global);
     }
     await fn();
   } finally {
     for (const key of keys) {
       const previous = previousValues.get(key);
       if (previous === undefined) {
-        await config.update(key, undefined, vscode.ConfigurationTarget.Workspace);
+        await config.update(key, undefined, vscode.ConfigurationTarget.Global);
       } else {
-        await config.update(key, previous, vscode.ConfigurationTarget.Workspace);
+        await config.update(key, previous, vscode.ConfigurationTarget.Global);
       }
     }
   }
