@@ -125,7 +125,7 @@ function resolveAnalyzer(
   }
 
   if (preset === "claudeP") {
-    return { command: "claude", args: ["-p"], promptTransport: "arg" };
+    return { command: "claude", args: ["-p", "--permission-mode", "dontAsk", "--tools", "Read"], promptTransport: "arg" };
   }
 
   const parsed = parseArgsStringToArgv(customCommand.trim());
