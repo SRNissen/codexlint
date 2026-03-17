@@ -121,7 +121,7 @@ function resolveAnalyzer(
   customInput: PromptTransport
 ): { command: string; args: string[]; promptTransport: PromptTransport } {
   if (preset === "codexExec") {
-    return { command: "codex", args: ["exec"], promptTransport: "arg" };
+    return { command: "codex", args: ["exec", "--sandbox", "read-only"], promptTransport: "arg" };
   }
 
   if (preset === "claudeP") {
