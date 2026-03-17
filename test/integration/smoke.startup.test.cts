@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import * as vscode from "vscode";
@@ -65,7 +65,82 @@ suite("smoke startup", () => {
 
     await rm(probePath, { force: true });
   });
+
+  test("claude -p probe: reports write capability in workspace context", async function () {
+    if (process.env.CODEXLINT_RUN_CLAUDE_PROBE !== "1") {
+      this.skip();
+      return;
+    }
+
+    this.timeout(180_000);
+
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    assert.ok(workspacePath, "expected workspace path");
+
+    const probePath = path.join(workspacePath, "claude-write-probe.txt");
+    await writeClaudeWorkspacePermissions(workspacePath);
+    await rm(probePath, { force: true });
+
+    const prompt = [
+      "You are running a write-capability probe in a local workspace.",
+      `Please create an empty file at this exact path: ${probePath}`,
+      "If you cannot write, explain why you think writing is blocked in this context.",
+      "Respond in plain text with your conclusion."
+    ].join(" ");
+
+    const result = await runProcessWithTimeout({
+      command: "claude",
+      args: ["-p", prompt],
+      cwd: workspacePath,
+      timeoutMs: 150_000
+    });
+
+    const probeExists = await pathExists(probePath);
+    const probeContents = probeExists ? await readFile(probePath, "utf8") : "";
+
+    console.log(`[smoke] claude probe cwd=${workspacePath}`);
+    console.log(`[smoke] claude probe exists=${probeExists}`);
+    if (probeExists) {
+      console.log(`[smoke] claude probe contents=${probeContents}`);
+    }
+    console.log(`[smoke] claude probe stdout=${result.stdout.trim()}`);
+    if (result.stderr.trim().length > 0) {
+      console.log(`[smoke] claude probe stderr=${result.stderr.trim()}`);
+    }
+
+    assert.equal(result.exitCode, 0, `expected claude -p to exit successfully: ${result.stderr}`);
+    assert.equal(probeExists, true, `expected claude -p to create ${probePath}`);
+
+    await rm(probePath, { force: true });
+  });
 });
+
+async function writeClaudeWorkspacePermissions(workspacePath: string): Promise<void> {
+  const claudeDir = path.join(workspacePath, ".claude");
+  const settingsPath = path.join(claudeDir, "settings.json");
+  const settings = {
+    defaultMode: "plan",
+    permissions: {
+      allow: ["Bash", "Edit"]
+    }
+  };
+
+  await mkdir(claudeDir, { recursive: true });
+  await writeFile(settingsPath, `${JSON.stringify(settings, null, 4)}\n`, "utf8");
+}
+
+async function pathExists(filePath: string): Promise<boolean> {
+  try {
+    await readFile(filePath, "utf8");
+    return true;
+  } catch (error) {
+    const nodeError = error as NodeJS.ErrnoException;
+    if (nodeError.code === "ENOENT") {
+      return false;
+    }
+    throw error;
+  }
+}
 
 async function runProcessWithTimeout(options: {
   command: string;
@@ -104,7 +179,7 @@ async function runProcessWithTimeout(options: {
     child.on("close", (code) => {
       clearTimeout(timeoutHandle);
       if (timedOut) {
-        reject(new Error(`codex probe timed out after ${options.timeoutMs}ms`));
+        reject(new Error(`probe timed out after ${options.timeoutMs}ms`));
         return;
       }
       resolve({ stdout, stderr, exitCode: code ?? -1 });
