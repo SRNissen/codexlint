@@ -41,7 +41,7 @@ This command is useful for local troubleshooting, but is subject to change or re
 
 ## Recommended near-term work
 
-The README.md file contains a roadmap. Contributions within the roadmap will be given serious consideration. Contributions outside the roadmap are likely to be ignored.
+The README.md file contains a high level roadmap. ROADMAP.md contains specific concerns. Contributions within the roadmap will be given serious consideration. Contributions outside the roadmap are likely to be ignored.
 
 ## CONSIDERATIONS.md
 

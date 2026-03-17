@@ -332,3 +332,19 @@ of all that must be writte, with the last character prefixed" - no?
                                       
 ● You're welcome! 
 ```
+
+### Why the custom command should be gated behind "trusted repos only" even if it is in principle the same as the built-in commands
+
+Writing the invokable command safely is hard. We know partially because I just failed twice in a row, with guidance,
+and I didn't just vibe code something that failed, I wrote it wrong after spending a chunk of time reading
+documentation and consulting with two separate top-flight models about the threat model, even diving into the
+internals of one of them to see what was happening.
+
+There is nothing in-principle *harder* about writing a custom command than what I did. There is nothing in-principle
+wrong with a custom script for analyzing untrusted code. Nonetheless, it is highly likely to go wrong, such that the
+linter has permissions that might be influenced by the repository under analysis (as, indeed, both of ours currently
+would have if it wasn't for the hardening pass we just did together)
+
+And so, there is nothing in-principle wrong about letting a custom invocation/prompt operate on an untrusted
+repository, but in practice, it is a disaster waiting to happen and should be given far more design thought before
+going ahead.
