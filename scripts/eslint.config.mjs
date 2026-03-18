@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 
 /** @type {import("eslint").Linter.Config[]} */
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.dirname(__dirname);
 
 export default [
   {
@@ -15,8 +16,8 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: "./tsconfig.json",
-        tsconfigRootDir: __dirname
+        project: path.join(repoRoot, "tsconfig.json"),
+        tsconfigRootDir: repoRoot
       },
       ecmaVersion: 2022,
       sourceType: "module"

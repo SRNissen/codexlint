@@ -14,7 +14,6 @@
 !AGENTS.md
 !CONSIDERATIONS.md
 !ROADMAP.md
-!.eslint.config.js
 !package-lock.json
 !package.json
 !tsconfig.json
@@ -23,7 +22,6 @@
 !/scripts/**
 
 #test
-!.vscode-test.mjs
 !/test/
 !/test/**
 
