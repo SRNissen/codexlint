@@ -355,3 +355,42 @@ going ahead.
 2. I don't want to be *surprised* if step 1 fails - I would like most of those steps to be part of the regular dev work, so I don't end up believing I am ready to package, and suddenly catch a mistake I could have caught hours ago, but have instead built on top of due to not knowing. This goal is not mandatory, it is "merely" a QoL issue during development, rather than a safety gate for our users.
   2.1 npm audit can be an issue when there are e.g. network problems or, when I'm working with you, it can cause network boundary permission escalations. I am very open to moving it out of the normal flow, but I would still like it to be called very regularly. I have some thoughts on a change, but I would love to hear a couple of suggestions on how you would solve this.
 3. Testing currently cleans before and after the full test, rather than having cleanup in the individual test scripts. The goal is easy inspection of test artifacts when tests fail. I am aware that this can cause test aberrations if there is a name conflict in test resources or artifacts. I have decide to handle this with unique names for each test artifact. I am open to other suggestions.
+
+### 2026-03-18T15:30:00Z
+
+Goal-level summary from script-design discussion:
+
+1) Packaging/release is a special action
+- Creating a distributable artifact should be gated more strictly than ordinary development commands.
+- A package/release command should not succeed unless all mandatory quality and safety checks are green.
+- At minimum that means lint, buildability/type-checking, tests, and dependency-policy/audit checks.
+- Flag-gated or manual probes can remain outside that mandatory gate.
+
+2) Failures should be discovered before release time
+- Most failures that would block packaging should ideally be discovered during normal development rather than only when preparing a release.
+- The workflow should encourage regular checkpointing so mistakes are caught before more work accumulates on top of them.
+- This is partly a safety goal and partly a quality-of-life goal.
+
+3) Audit is important, but different in character from lint/build/test
+- Dependency auditing matters enough that it should be run regularly rather than treated as a rare release-only task.
+- At the same time, audit is network-bound and can fail for reasons unrelated to repository correctness.
+- That makes audit awkward to hide inside routine behavioral test commands.
+- The desired long-term policy is: audit should remain frequent enough to form a habit, without making routine local correctness checks misleading or brittle.
+
+4) Script names matter less than honest boundaries
+- The surrounding ecosystem does not appear to have a stable consensus on `build` vs `compile` naming.
+- Therefore exact names are negotiable; what matters more is semantic honesty.
+- Script names should describe responsibilities clearly rather than quietly bundling unrelated pipelines together.
+- In particular, build-like commands, test-like commands, audit-like commands, and package/release commands should remain meaningfully distinguishable.
+
+5) Watch is convenience, not the correctness model
+- `watch` is a convenience for fast iteration, not itself a correctness gate.
+- A healthy project should support both styles of work:
+  - continuous background rebuilds during editing
+  - deliberate one-shot checkpoint commands
+- Lack of familiarity with watch-heavy JavaScript/TypeScript workflows is not itself a design problem; the workflow should still make sense to someone who prefers explicit checkpoints.
+
+6) Local editor workflow is legitimate local-only state
+- Local editor/task convenience files such as `.vscode` are legitimate local-only state.
+- It is acceptable to keep machine-specific editor workflow details out of git.
+- Repository-level workflow conventions should avoid machine-specific assumptions and avoid unnecessary contributor churn in editor metadata.
