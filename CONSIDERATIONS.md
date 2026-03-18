@@ -348,3 +348,10 @@ would have if it wasn't for the hardening pass we just did together)
 And so, there is nothing in-principle wrong about letting a custom invocation/prompt operate on an untrusted
 repository, but in practice, it is a disaster waiting to happen and should be given far more design thought before
 going ahead.
+
+## npm scripts
+
+1. I never want an "npm run ..." to result in a package, unless we are green on truly everything - audit, lint, compile, tests (except those gated behind flags). This goal is mandatory, but the current solution is replacable if you have better suggestions.
+2. I don't want to be *surprised* if step 1 fails - I would like most of those steps to be part of the regular dev work, so I don't end up believing I am ready to package, and suddenly catch a mistake I could have caught hours ago, but have instead built on top of due to not knowing. This goal is not mandatory, it is "merely" a QoL issue during development, rather than a safety gate for our users.
+  2.1 npm audit can be an issue when there are e.g. network problems or, when I'm working with you, it can cause network boundary permission escalations. I am very open to moving it out of the normal flow, but I would still like it to be called very regularly. I have some thoughts on a change, but I would love to hear a couple of suggestions on how you would solve this.
+3. Testing currently cleans before and after the full test, rather than having cleanup in the individual test scripts. The goal is easy inspection of test artifacts when tests fail. I am aware that this can cause test aberrations if there is a name conflict in test resources or artifacts. I have decide to handle this with unique names for each test artifact. I am open to other suggestions.
