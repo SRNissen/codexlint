@@ -188,7 +188,7 @@
     "reset:test-workspace": "node scripts/reset-test-workspace.mjs",
     "test:integration": "vscode-test --config scripts/vscode-test.mjs",
     "test:unit": "node --test test/unit/**/*.test.mjs",
-    "watch": "npm run watch:extension & npm run watch:typecheck",
+    "watch": "node scripts/watch.mjs",
     "watch:extension": "esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap --watch",
     "watch:tests": "tsc -p ./tsconfig.test.json --watch",
     "watch:typecheck": "tsc -p ./ --noEmit --watch"
