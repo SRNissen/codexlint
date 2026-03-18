@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getConfig, runProcessWithTimeout, EXTENSION_NAME } from "./shared.js";
+import { getConfig, getUserPreferredConfigValue, runProcessWithTimeout, EXTENSION_NAME } from "./shared.js";
 
 const SHOW_DEBUG_COMMAND_CONTEXT = "codexlint.showDebugEnvironmentCommand";
 
@@ -54,8 +54,7 @@ export function printEnv(output: vscode.OutputChannel) {
 }
 
 export async function updateDebugCommandVisibility(): Promise<void> {
-  const isVisible = vscode.workspace
-    .getConfiguration("codexlint")
-    .get<boolean>("operation.showDebugCommand", false);
+  const config = vscode.workspace.getConfiguration("codexlint");
+  const isVisible = getUserPreferredConfigValue(config, "operation.showDebugCommand", false);
   await vscode.commands.executeCommand("setContext", SHOW_DEBUG_COMMAND_CONTEXT, isVisible);
 }

@@ -63,35 +63,68 @@ export interface CodexFinding {
 export function getConfig(): CodexLintConfig {
   const config = vscode.workspace.getConfiguration("codexlint");
   const analyzerPreset = normalizeAnalyzerPreset(
-    config.get<AnalyzerPreset>("analyzer.command", "codexExec")
+    getUserPreferredConfigValue(config, "analyzer.command", "codexExec")
   );
-  const customCommand = config.get<string>("analyzer.customCommand", "");
-  const customInput = normalizePromptTransport(config.get<PromptTransport>("analyzer.customInput", "arg"));
-  const selectedSkills = parseSelectedSkills(config.get<string>("prompt.selectedSkills", ""));
-  const highlightSelectedSkills = config.get<boolean>("prompt.highlightSelectedSkills", false);
-  const useCustomPrompt = config.get<boolean>("prompt.customPrompt", false);
-  const customPrompt = config.get<string>("prompt.customPromptText", "");
+  const customCommand = getUserPreferredConfigValue(config, "analyzer.customCommand", "");
+  const customInput = normalizePromptTransport(
+    getUserPreferredConfigValue(config, "analyzer.customInput", "arg")
+  );
+  const selectedSkills = parseSelectedSkills(
+    getUserPreferredConfigValue(config, "prompt.selectedSkills", "")
+  );
+  const highlightSelectedSkills = getUserPreferredConfigValue(
+    config,
+    "prompt.highlightSelectedSkills",
+    false
+  );
+  const useCustomPrompt = getUserPreferredConfigValue(config, "prompt.customPrompt", false);
+  const customPrompt = getUserPreferredConfigValue(config, "prompt.customPromptText", "");
   const { command, args, promptTransport } = resolveAnalyzer(analyzerPreset, customCommand, customInput);
   const promptTemplate =
     useCustomPrompt && customPrompt.trim().length > 0 ? customPrompt : DEFAULT_PROMPT_TEMPLATE;
 
   return {
-    enabled: config.get<boolean>("operation.enabled", true),
-    debounceMs: config.get<number>("operation.debounceMs", DEFAULT_DEBOUNCE_MS),
+    enabled: getUserPreferredConfigValue(config, "operation.enabled", true),
+    debounceMs: getUserPreferredConfigValue(config, "operation.debounceMs", DEFAULT_DEBOUNCE_MS),
     minFileReanalyzeMs: Math.max(
       0,
-      config.get<number>("operation.minFileReanalyzeMs", DEFAULT_MIN_FILE_REANALYZE_MS)
+      getUserPreferredConfigValue(
+        config,
+        "operation.minFileReanalyzeMs",
+        DEFAULT_MIN_FILE_REANALYZE_MS
+      )
     ),
-    maxFileBytes: config.get<number>("operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
-    skipBinaryFiles: config.get<boolean>("operation.skipBinaryFiles", true),
-    showDebugIO: config.get<boolean>("operation.showDebugIO", false),
+    maxFileBytes: getUserPreferredConfigValue(config, "operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
+    skipBinaryFiles: getUserPreferredConfigValue(config, "operation.skipBinaryFiles", true),
+    showDebugIO: getUserPreferredConfigValue(config, "operation.showDebugIO", false),
     analysisCommand: command,
     analysisArgs: args,
     promptTransport,
     promptTemplate,
     selectedSkills: highlightSelectedSkills ? selectedSkills : [],
-    timeoutMs: config.get<number>("operation.timeoutMs", DEFAULT_TIMEOUT_MS)
+    timeoutMs: getUserPreferredConfigValue(config, "operation.timeoutMs", DEFAULT_TIMEOUT_MS)
   };
+}
+
+export function getUserPreferredConfigValue<T>(
+  config: vscode.WorkspaceConfiguration,
+  key: string,
+  defaultValue: T
+): T {
+  const inspected = config.inspect<T>(key);
+  if (inspected?.globalLanguageValue !== undefined) {
+    return inspected.globalLanguageValue;
+  }
+  if (inspected?.globalValue !== undefined) {
+    return inspected.globalValue;
+  }
+  if (inspected?.defaultLanguageValue !== undefined) {
+    return inspected.defaultLanguageValue;
+  }
+  if (inspected?.defaultValue !== undefined) {
+    return inspected.defaultValue;
+  }
+  return defaultValue;
 }
 
 function normalizePromptTransport(value: unknown): PromptTransport {
