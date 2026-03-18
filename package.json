@@ -171,21 +171,24 @@
     "string-argv": "^0.3.2"
   },
   "scripts": {
-    "build": "npm run build:release",
-    "build:release": "npm run build:verify && node prepare-dist.mjs && cd dist && vsce package --no-dependencies",
-    "build:verify": "npm run build:clean && npm run lint && npm run test",
-    "build:clean": "node -e \"fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('dist',{recursive:true,force:true});\"",
-    "compile": "npm run lint && npm run compile:extension && npm run compile:test",
-    "compile:test": "node -e \"fs.rmSync('out/test',{recursive:true,force:true})\" && tsc -p ./tsconfig.test.json",
-    "compile:extension": "tsc -p ./ --noEmit && esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap",
-    "watch": "npm run watch:extension",
-    "watch:extension": "tsc -watch -p ./",
+    "audit:prod": "npm audit --omit=dev",
+    "build:extension": "esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap",
+    "build:tests": "tsc -p ./tsconfig.test.json",
+    "clean:dist": "node scripts/clean.mjs dist",
+    "clean:extension-output": "node scripts/clean.mjs out/src",
+    "clean:test-output": "node scripts/clean.mjs out/test",
+    "clean:test-workspace": "node scripts/clean.mjs test-workspace",
     "lint": "eslint \"src/**/*.ts\"",
+    "package:prepare": "node scripts/prepare-dist.mjs",
+    "package:vsix": "node scripts/package-vsix.mjs",
+    "package": "npm run lint && npm run typecheck && npm run build:extension && npm run clean:test-output && npm run build:tests && npm run test:unit && npm run reset:test-workspace && npm run test:integration && npm run audit:prod && npm run package:prepare && npm run package:vsix",
+    "reset:test-workspace": "node scripts/reset-test-workspace.mjs",
+    "test:integration": "vscode-test",
     "test:unit": "node --test test/unit/**/*.test.mjs",
-    "test:integration:setup": "npm audit --omit=dev && npm run compile && node -e \"fs.rmSync('test-workspace',{recursive:true,force:true}); fs.mkdirSync('test-workspace',{recursive:true})\"",
-    "test:integration:teardown": "node -e \"fs.rmSync('test-workspace',{recursive:true,force:true})\"",
-    "test:integration": "npm run test:integration:setup && vscode-test && npm run test:integration:teardown",
-    "test": "npm run test:unit && npm run test:integration"
+    "typecheck": "tsc -p ./ --noEmit",
+    "watch:extension": "esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap --watch",
+    "watch:tests": "tsc -p ./tsconfig.test.json --watch",
+    "watch:typecheck": "tsc -p ./ --noEmit --watch"
   },
   "type": "module"
 }
