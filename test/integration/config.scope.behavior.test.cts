@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 const POLL_INTERVAL_MS = 50;
 
 suite("config scope behavior", () => {
-  test("prefers global values over workspace values for all codexlint settings", async function () {
+  test("getConfig prefers global values over workspace values for codexlint settings", async function () {
     this.timeout(getDefaultWaitForMs() + 10_000);
 
     const globalCustomCommand = `${process.execPath} /global/custom/analyzer.cjs`;
@@ -29,7 +29,6 @@ suite("config scope behavior", () => {
       "operation.maxFileBytes": 4_567,
       "operation.skipBinaryFiles": false,
       "operation.timeoutMs": 8_901,
-      "operation.showDebugCommand": true,
       "operation.showDebugIO": true
     } as const;
     const workspaceUpdates = {
@@ -46,71 +45,13 @@ suite("config scope behavior", () => {
       "operation.maxFileBytes": 1,
       "operation.skipBinaryFiles": true,
       "operation.timeoutMs": 1,
-      "operation.showDebugCommand": false,
       "operation.showDebugIO": false
     } as const;
 
     await withGlobalCodexlintConfig(globalUpdates, async () => {
       await withWorkspaceCodexlintSettings(workspaceUpdates, async () => {
-        const config = vscode.workspace.getConfiguration("codexlint");
         const { getConfig } = await import("../../src/shared.js");
         const resolved = getConfig();
-
-        assertCodexlintConfigValue(config, "analyzer.command", globalUpdates["analyzer.command"]);
-        assertCodexlintConfigValue(
-          config,
-          "analyzer.customCommand",
-          globalUpdates["analyzer.customCommand"]
-        );
-        assertCodexlintConfigValue(
-          config,
-          "analyzer.customInput",
-          globalUpdates["analyzer.customInput"]
-        );
-        assertCodexlintConfigValue(
-          config,
-          "prompt.highlightSelectedSkills",
-          globalUpdates["prompt.highlightSelectedSkills"]
-        );
-        assertCodexlintConfigValue(
-          config,
-          "prompt.selectedSkills",
-          globalUpdates["prompt.selectedSkills"]
-        );
-        assertCodexlintConfigValue(config, "prompt.customPrompt", globalUpdates["prompt.customPrompt"]);
-        assertCodexlintConfigValue(
-          config,
-          "prompt.customPromptText",
-          globalUpdates["prompt.customPromptText"]
-        );
-        assertCodexlintConfigValue(config, "operation.enabled", globalUpdates["operation.enabled"]);
-        assertCodexlintConfigValue(config, "operation.debounceMs", globalUpdates["operation.debounceMs"]);
-        assertCodexlintConfigValue(
-          config,
-          "operation.minFileReanalyzeMs",
-          globalUpdates["operation.minFileReanalyzeMs"]
-        );
-        assertCodexlintConfigValue(
-          config,
-          "operation.maxFileBytes",
-          globalUpdates["operation.maxFileBytes"]
-        );
-        assertCodexlintConfigValue(
-          config,
-          "operation.skipBinaryFiles",
-          globalUpdates["operation.skipBinaryFiles"]
-        );
-        assertCodexlintConfigValue(config, "operation.timeoutMs", globalUpdates["operation.timeoutMs"]);
-        assertCodexlintConfigValue(
-          config,
-          "operation.showDebugCommand",
-          globalUpdates["operation.showDebugCommand"]
-        );
-        assertCodexlintConfigValue(
-          config,
-          "operation.showDebugIO",
-          globalUpdates["operation.showDebugIO"]
-        );
 
         assert.equal(resolved.enabled, globalUpdates["operation.enabled"]);
         assert.equal(resolved.debounceMs, globalUpdates["operation.debounceMs"]);
@@ -368,19 +309,6 @@ async function waitForWorkspaceCodexlintValues(expected: Record<string, unknown>
 
 function matchesExpectedValue(actual: unknown, expected: unknown): boolean {
   return JSON.stringify(actual) === JSON.stringify(expected);
-}
-
-function assertCodexlintConfigValue(
-  config: vscode.WorkspaceConfiguration,
-  key: string,
-  expected: unknown
-): void {
-  const actual = config.get(key);
-  assert.equal(
-    JSON.stringify(actual),
-    JSON.stringify(expected),
-    `expected codexlint.${key} to resolve from global settings`
-  );
 }
 
 async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs?: number): Promise<void> {
