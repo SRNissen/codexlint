@@ -79,21 +79,21 @@ suite("workspace trust manual diagnostic", () => {
 
       await assertAnalyzerBehavior({
         analyzerCommand: "codexExec",
-        expectedLints: true,
+        expectedResult: "lints",
         fakeAnalyzerImplPath: fakeAnalyzerPath,
         output,
         phase: "untrusted"
       });
       await assertAnalyzerBehavior({
         analyzerCommand: "claudeP",
-        expectedLints: true,
+        expectedResult: "lints",
         fakeAnalyzerImplPath: fakeAnalyzerPath,
         output,
         phase: "untrusted"
       });
       await assertAnalyzerBehavior({
         analyzerCommand: "custom",
-        expectedLints: false,
+        expectedResult: "blocked",
         fakeAnalyzerImplPath: fakeAnalyzerPath,
         output,
         phase: "untrusted"
@@ -109,21 +109,21 @@ suite("workspace trust manual diagnostic", () => {
       output.appendLine("[diagnostic] phase 3: verify trusted analyzer behavior");
       await assertAnalyzerBehavior({
         analyzerCommand: "codexExec",
-        expectedLints: true,
+        expectedResult: "lints",
         fakeAnalyzerImplPath: fakeAnalyzerPath,
         output,
         phase: "trusted"
       });
       await assertAnalyzerBehavior({
         analyzerCommand: "claudeP",
-        expectedLints: true,
+        expectedResult: "lints",
         fakeAnalyzerImplPath: fakeAnalyzerPath,
         output,
         phase: "trusted"
       });
       await assertAnalyzerBehavior({
         analyzerCommand: "custom",
-        expectedLints: true,
+        expectedResult: "lints",
         fakeAnalyzerImplPath: fakeAnalyzerPath,
         output,
         phase: "trusted"
@@ -136,7 +136,7 @@ suite("workspace trust manual diagnostic", () => {
 
 async function assertAnalyzerBehavior(options: {
   analyzerCommand: "codexExec" | "claudeP" | "custom";
-  expectedLints: boolean;
+  expectedResult: "lints" | "blocked";
   fakeAnalyzerImplPath: string;
   output: vscode.OutputChannel;
   phase: "trusted" | "untrusted";
@@ -147,6 +147,7 @@ async function assertAnalyzerBehavior(options: {
   const filePath = path.join(workspacePath, `${fileStem}.ts`);
   const fileUri = vscode.Uri.file(filePath);
   const findingCode = `workspace-trust-${fileStem}`;
+  const blockedCode = "custom-analyzer-requires-trusted-workspace";
   const updates: Record<string, unknown> = {
     "analyzer.command": options.analyzerCommand,
     "analyzer.customCommand": "",
@@ -171,14 +172,14 @@ async function assertAnalyzerBehavior(options: {
   });
 
   options.output.appendLine(
-    `[diagnostic] checking ${options.phase}/${options.analyzerCommand}; expectedLints=${options.expectedLints}`
+    `[diagnostic] checking ${options.phase}/${options.analyzerCommand}; expectedResult=${options.expectedResult}`
   );
 
   await withCodexlintConfig(updates, async () => {
     const document = await vscode.workspace.openTextDocument(fileUri);
     await appendAndSave(document, `// save trigger ${fileStem}\n`);
 
-    if (options.expectedLints) {
+    if (options.expectedResult === "lints") {
       await waitFor(() => hasCounterReached(counterPath, 1));
       await waitFor(() => hasDiagnosticCode(fileUri, findingCode));
       options.output.appendLine(`[diagnostic] observed lint for ${options.phase}/${options.analyzerCommand}`);
@@ -186,13 +187,32 @@ async function assertAnalyzerBehavior(options: {
     }
 
     await assertCounterDoesNotIncrease(counterPath, 0, CUSTOM_BLOCK_WINDOW_MS);
+    await waitFor(() => hasDiagnosticCode(fileUri, blockedCode));
+
+    const blockedDiagnostic = getCodexlintDiagnostics(fileUri).find(
+      (diagnostic) => diagnostic.code === blockedCode
+    );
+    assert.ok(
+      blockedDiagnostic,
+      `expected a trust warning diagnostic for ${options.phase}/${options.analyzerCommand}`
+    );
+    assert.equal(
+      blockedDiagnostic.severity,
+      vscode.DiagnosticSeverity.Information,
+      `expected an informational diagnostic for ${options.phase}/${options.analyzerCommand}`
+    );
+    assert.match(
+      blockedDiagnostic.message,
+      /trusted workspace/i,
+      `expected the diagnostic to explain the workspace trust requirement for ${options.phase}/${options.analyzerCommand}`
+    );
     assert.equal(
       hasDiagnosticCode(fileUri, findingCode),
       false,
-      `expected no diagnostic for ${options.phase}/${options.analyzerCommand}`
+      `expected no analyzer findings for ${options.phase}/${options.analyzerCommand}`
     );
     options.output.appendLine(
-      `[diagnostic] observed no lint for ${options.phase}/${options.analyzerCommand}`
+      `[diagnostic] observed trust block for ${options.phase}/${options.analyzerCommand}`
     );
   });
 }
