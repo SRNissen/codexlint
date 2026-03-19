@@ -4,30 +4,8 @@ import path from "node:path";
 import { spawn } from "node:child_process";
 import * as vscode from "vscode";
 
-suite("smoke startup", () => {
-  test("loads workspace and activates codexlint extension", async () => {
-    assert.ok(
-      vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0,
-      "expected a workspace folder"
-    );
-    const workspacePath = vscode.workspace.workspaceFolders[0]?.uri.fsPath;
-    assert.ok(workspacePath, "expected workspace path");
-    console.log(`[smoke] process.cwd=${process.cwd()}`);
-    console.log(`[smoke] workspace.fsPath=${workspacePath}`);
-
-    const extension = vscode.extensions.getExtension("SRNissen.codexlint");
-    assert.ok(extension, "expected codexlint extension to be installed for tests");
-
-    await extension.activate();
-    assert.equal(extension.isActive, true, "expected codexlint extension to be active");
-  });
-
-  test("codex exec probe: reports write capability in workspace context", async function () {
-    if (process.env.CODEXLINT_RUN_CODEX_PROBE !== "1") {
-      this.skip();
-      return;
-    }
-
+suite("manual diagnostics", () => {
+  test("codex exec probe reports write capability in workspace context", async function () {
     this.timeout(180_000);
 
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -54,11 +32,11 @@ suite("smoke startup", () => {
     const probeContents = await readFile(probePath, "utf8");
     const wroteAfter = probeContents.includes("\nafter");
 
-    console.log(`[smoke] codex probe cwd=${workspacePath}`);
-    console.log(`[smoke] codex probe wroteAfter=${wroteAfter}`);
-    console.log(`[smoke] codex probe stdout=${result.stdout.trim()}`);
+    console.log(`[diagnostic] codex probe cwd=${workspacePath}`);
+    console.log(`[diagnostic] codex probe wroteAfter=${wroteAfter}`);
+    console.log(`[diagnostic] codex probe stdout=${result.stdout.trim()}`);
     if (result.stderr.trim().length > 0) {
-      console.log(`[smoke] codex probe stderr=${result.stderr.trim()}`);
+      console.log(`[diagnostic] codex probe stderr=${result.stderr.trim()}`);
     }
 
     assert.equal(result.exitCode, 0, `expected codex exec to exit successfully: ${result.stderr}`);
@@ -66,12 +44,7 @@ suite("smoke startup", () => {
     await rm(probePath, { force: true });
   });
 
-  test("claude -p probe: reports write capability in workspace context", async function () {
-    if (process.env.CODEXLINT_RUN_CLAUDE_PROBE !== "1") {
-      this.skip();
-      return;
-    }
-
+  test("claude -p probe reports write capability in workspace context", async function () {
     this.timeout(180_000);
 
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -98,14 +71,14 @@ suite("smoke startup", () => {
     const probeExists = await pathExists(probePath);
     const probeContents = probeExists ? await readFile(probePath, "utf8") : "";
 
-    console.log(`[smoke] claude probe cwd=${workspacePath}`);
-    console.log(`[smoke] claude probe exists=${probeExists}`);
+    console.log(`[diagnostic] claude probe cwd=${workspacePath}`);
+    console.log(`[diagnostic] claude probe exists=${probeExists}`);
     if (probeExists) {
-      console.log(`[smoke] claude probe contents=${probeContents}`);
+      console.log(`[diagnostic] claude probe contents=${probeContents}`);
     }
-    console.log(`[smoke] claude probe stdout=${result.stdout.trim()}`);
+    console.log(`[diagnostic] claude probe stdout=${result.stdout.trim()}`);
     if (result.stderr.trim().length > 0) {
-      console.log(`[smoke] claude probe stderr=${result.stderr.trim()}`);
+      console.log(`[diagnostic] claude probe stderr=${result.stderr.trim()}`);
     }
 
     assert.equal(result.exitCode, 0, `expected claude -p to exit successfully: ${result.stderr}`);

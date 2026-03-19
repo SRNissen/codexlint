@@ -7,7 +7,7 @@ const repoRoot = path.dirname(__dirname);
 
 export default defineConfig({
   extensionDevelopmentPath: repoRoot,
-  files: "../out/test/integration/**/*.test.cjs",
+  files: "../out/test/adversarial/**/*.test.cjs",
   version: "1.111.0",
   workspaceFolder: "../test-workspace",
   launchArgs: ["--disable-extensions", "--disable-gpu"],
