@@ -188,6 +188,7 @@
     "reset:test-workspace": "node scripts/reset-test-workspace.mjs",
     "test:adversarial": "vscode-test --config scripts/vscode-test.adversarial.mjs",
     "test:diagnostic-manual": "vscode-test --config scripts/vscode-test.diagnostic-manual.mjs",
+    "test:diagnostic-manual:workspace-trust": "node scripts/test-workspace-trust-diagnostic.mjs",
     "test:integration": "vscode-test --config scripts/vscode-test.mjs --forbid-pending",
     "test:unit": "node --test test/unit/**/*.test.mjs",
     "watch": "node scripts/watch.mjs",
