@@ -1,6 +1,12 @@
 import * as vscode from "vscode";
 import { analyzeSavedDocument } from "./analyze.js";
-import { type CodexFinding, type CodexLintConfig, EXTENSION_NAME, getConfig } from "./shared.js";
+import {
+  type CodexFinding,
+  type CodexLintAnalysisBlock,
+  type CodexLintConfig,
+  EXTENSION_NAME,
+  getConfig
+} from "./shared.js";
 
 const BINARY_SCAN_CHARS = 8_192;
 
@@ -53,6 +59,11 @@ async function runAnalysisForDocument(
 
   if (!shouldAnalyzeDocument(document, cfg)) {
     resources.diagnostics.delete(document.uri);
+    return;
+  }
+
+  if (cfg.analysisBlock !== undefined) {
+    resources.diagnostics.set(document.uri, [createBlockedAnalysisDiagnostic(document, cfg.analysisBlock)]);
     return;
   }
 
@@ -154,6 +165,20 @@ function createAnalyzingDiagnostic(document: vscode.TextDocument): vscode.Diagno
   );
   diagnostic.source = EXTENSION_NAME;
   diagnostic.code = "analysis-in-progress";
+  return diagnostic;
+}
+
+function createBlockedAnalysisDiagnostic(
+  document: vscode.TextDocument,
+  analysisBlock: CodexLintAnalysisBlock
+): vscode.Diagnostic {
+  const diagnostic = new vscode.Diagnostic(
+    testDiagnosticRange(document),
+    analysisBlock.message,
+    analysisBlock.severity
+  );
+  diagnostic.source = EXTENSION_NAME;
+  diagnostic.code = analysisBlock.code;
   return diagnostic;
 }
 

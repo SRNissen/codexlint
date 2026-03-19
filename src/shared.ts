@@ -7,6 +7,9 @@ export const DEFAULT_DEBOUNCE_MS = 750;
 export const DEFAULT_MIN_FILE_REANALYZE_MS = 300_000;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
+export const CUSTOM_ANALYZER_TRUST_BLOCK_CODE = "custom-analyzer-requires-trusted-workspace";
+export const CUSTOM_ANALYZER_TRUST_BLOCK_MESSAGE =
+  "codexlint custom analyzers require a trusted workspace. Trust this workspace to run the configured custom analyzer.";
 export const DEFAULT_PROMPT_TEMPLATE = [
   "You are a static security reviewer for a single source file.",
   "Analyze only the file content provided below.",
@@ -48,6 +51,7 @@ export interface CodexLintConfig {
   promptTemplate: string;
   selectedSkills: string[];
   timeoutMs: number;
+  analysisBlock: CodexLintAnalysisBlock | undefined;
 }
 
 export interface CodexFinding {
@@ -58,6 +62,12 @@ export interface CodexFinding {
   endLine: number;
   endColumn: number;
   code: string | number | undefined;
+}
+
+export interface CodexLintAnalysisBlock {
+  code: string;
+  message: string;
+  severity: vscode.DiagnosticSeverity;
 }
 
 export function getConfig(): CodexLintConfig {
@@ -79,7 +89,11 @@ export function getConfig(): CodexLintConfig {
   );
   const useCustomPrompt = getUserPreferredConfigValue(config, "prompt.customPrompt", false);
   const customPrompt = getUserPreferredConfigValue(config, "prompt.customPromptText", "");
-  const { command, args, promptTransport } = resolveAnalyzer(analyzerPreset, customCommand, customInput);
+  const { command, args, promptTransport, analysisBlock } = resolveAnalyzer(
+    analyzerPreset,
+    customCommand,
+    customInput
+  );
   const promptTemplate =
     useCustomPrompt && customPrompt.trim().length > 0 ? customPrompt : DEFAULT_PROMPT_TEMPLATE;
 
@@ -102,7 +116,8 @@ export function getConfig(): CodexLintConfig {
     promptTransport,
     promptTemplate,
     selectedSkills: highlightSelectedSkills ? selectedSkills : [],
-    timeoutMs: getUserPreferredConfigValue(config, "operation.timeoutMs", DEFAULT_TIMEOUT_MS)
+    timeoutMs: getUserPreferredConfigValue(config, "operation.timeoutMs", DEFAULT_TIMEOUT_MS),
+    analysisBlock
   };
 }
 
@@ -152,22 +167,50 @@ function resolveAnalyzer(
   preset: AnalyzerPreset,
   customCommand: string,
   customInput: PromptTransport
-): { command: string; args: string[]; promptTransport: PromptTransport } {
+): {
+  command: string;
+  args: string[];
+  promptTransport: PromptTransport;
+  analysisBlock: CodexLintAnalysisBlock | undefined;
+} {
   if (preset === "codexExec") {
-    return { command: "codex", args: ["exec", "--sandbox", "read-only"], promptTransport: "arg" };
+    return {
+      command: "codex",
+      args: ["exec", "--sandbox", "read-only"],
+      promptTransport: "arg",
+      analysisBlock: undefined
+    };
   }
 
   if (preset === "claudeP") {
-    return { command: "claude", args: ["-p", "--permission-mode", "dontAsk", "--tools", "Read"], promptTransport: "arg" };
+    return {
+      command: "claude",
+      args: ["-p", "--permission-mode", "dontAsk", "--tools", "Read"],
+      promptTransport: "arg",
+      analysisBlock: undefined
+    };
+  }
+
+  if (!vscode.workspace.isTrusted) {
+    return {
+      command: "",
+      args: [],
+      promptTransport: customInput,
+      analysisBlock: {
+        code: CUSTOM_ANALYZER_TRUST_BLOCK_CODE,
+        message: CUSTOM_ANALYZER_TRUST_BLOCK_MESSAGE,
+        severity: vscode.DiagnosticSeverity.Information
+      }
+    };
   }
 
   const parsed = parseArgsStringToArgv(customCommand.trim());
   const [command, ...args] = parsed;
   if (command === undefined) {
-    return { command: "", args: [], promptTransport: customInput };
+    return { command: "", args: [], promptTransport: customInput, analysisBlock: undefined };
   }
 
-  return { command, args, promptTransport: customInput };
+  return { command, args, promptTransport: customInput, analysisBlock: undefined };
 }
 
 export function runProcessWithTimeout(options: {
