@@ -19,6 +19,12 @@
   "engines": {
     "vscode": "^1.109.0"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "codexlint supports built-in analyzers in Restricted Mode. Custom analyzer commands require a trusted workspace."
+    }
+  },
   "license": "MIT",
   "preview": true,
   "main": "./out/src/extension.js",
