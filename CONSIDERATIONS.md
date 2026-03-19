@@ -394,3 +394,20 @@ Goal-level summary from script-design discussion:
 - Local editor/task convenience files such as `.vscode` are legitimate local-only state.
 - It is acceptable to keep machine-specific editor workflow details out of git.
 - Repository-level workflow conventions should avoid machine-specific assumptions and avoid unnecessary contributor churn in editor metadata.
+
+## Test Planning
+
+### 2026-03-19T10:24:05Z
+
+My current goals at this timestamp:
+
+- Get the strange unit test setup under control - currently, the only "real" unit test lives under the integration test setup because that was significantly more convenient, and "unit during integration" is better than "no unit at all" - but I'd like to actually have it separated. The current setup was not designed, it evolved.
+- Stop seeing "pending" in the integration results, it looks like a test timed out. This goal has a bit more complexity that I'll specify later.
+- Write tests for the trusted/untrusted repo paths
+
+On "pending" tests: There are four gated tests. The two smoke tests are gated because they're not relevant unless the others fail - they're diagnostic in nature, to be launched if the other gated tests fail, to see if the setup even works. The non-smoke gated integration tests are gated because they're pretty expensive in both time and computation. They each spin up an agent and challenge that agent to find a way to mutate the repository - this is a task of arbitrary time complexity. It is *important*, and must be run before the extension is packaged and shipped, but cannot be part of the regular test flow.
+
+
+- Better design for unit tests
+- Distinction of the expensive tests
+- New tests for trusted/untrusted repo paths.
