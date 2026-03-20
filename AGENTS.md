@@ -43,10 +43,10 @@ This command is useful for local troubleshooting, but is subject to change or re
 
 The README.md file contains a high level roadmap. ROADMAP.md contains specific concerns. Contributions within the roadmap will be given serious consideration. Contributions outside the roadmap are likely to be ignored.
 
-## CONSIDERATIONS.md
+## /considerations/*.md
 
-There should be a file "CONSIDERATIONS.md" or, if there isn't, you are encouraged to create such a file.
+The folder /considerations contains files in the pattern `CONSIDERATION.md`.
 
-The purpose of the file is to be a living history of the project - which tradeoffs were considered, and what direction they were decided. Which goals to work on, and in which order.
+The purpose of this directory to be a living history of the project - which tradeoffs were considered, and what direction they were decided. Which goals to work on, and in which order.
 
-Feel free to add anything relevant to the file, with a time stamp.
+As you work, feel free to add anything relevant to the files, with a time stamp. You may also open a new file, if the current subject doesn't match existing files.

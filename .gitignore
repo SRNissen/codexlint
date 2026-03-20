@@ -5,6 +5,8 @@
 !README.md
 !LICENSE.TXT
 !icon.png
+!/considerations/
+!/considerations/**
 
 #dev tooling
 !.gitignore
