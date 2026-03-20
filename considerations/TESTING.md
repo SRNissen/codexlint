@@ -155,3 +155,32 @@ On "pending" tests: There are four gated tests. The two smoke tests are gated be
 - Distinction of the expensive tests
 - New tests for trusted/untrusted repo paths.
 
+# 2026-03-20T11:28:08Z
+
+Test cleanup and artifact retention clarification:
+
+1) `clean:test-output` and `clean:test-workspace` do not serve the same purpose.
+- `clean:test-output` removes `out/test`.
+- That directory contains compiled test JavaScript and sourcemaps emitted by `build:tests`.
+- It is build output, not runtime test data.
+
+- `clean:test-workspace` removes `test-workspace`.
+- That directory contains files created while the VS Code-hosted tests run, such as generated analyzer scripts, counters, and target files.
+- It is runtime test artifact state, not compiled output.
+
+2) `reset:test-workspace` is distinct from `clean:test-workspace`.
+- `clean:test-workspace` deletes the directory and leaves it absent.
+- `reset:test-workspace` deletes the directory and recreates it empty.
+- This is useful when tests expect a known-empty workspace to exist before the run starts.
+
+3) Current success-path behavior
+- `build:dist-no-audit` currently does:
+  - `npm run clean`
+  - `npm run reset:test-workspace`
+  - `npm run test:integration`
+- That means successful runs start with an empty `test-workspace`, but do not clean it again afterward.
+- Therefore integration test artifacts remain available after a successful run.
+
+4) Current regression framing
+- If the intended policy is "preserve test-workspace artifacts on failure, but clear them on success", the current regression is not confusion between the two cleanup scripts.
+- The actual gap is the lack of a final success-only cleanup step for `test-workspace`.
