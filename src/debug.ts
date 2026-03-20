@@ -1,20 +1,43 @@
 import * as vscode from "vscode";
-import { getConfig, getUserPreferredConfigValue, runProcessWithTimeout, EXTENSION_NAME } from "./shared.js";
+import {
+  ConfigValidationError,
+  EXTENSION_NAME,
+  getConfig,
+  getUserPreferredConfigValue,
+  runProcessWithTimeout
+} from "./shared.js";
 
 const SHOW_DEBUG_COMMAND_CONTEXT = "codexlint.showDebugEnvironmentCommand";
 
 export function printEnv(output: vscode.OutputChannel) {
   const pathValue = process.env.PATH ?? "(undefined)";
   const executablePath = process.execPath;
-  const configuredCommand = getConfig().analysisCommand;
   const nodePath = process.env.NODE ?? "(undefined)";
   const lookupCommand = process.platform === "win32" ? "where" : "which";
+  let configuredCommand = "(unavailable due to invalid codexlint configuration)";
+  let configError: ConfigValidationError | undefined;
+
+  try {
+    configuredCommand = getConfig().analysisCommand;
+  } catch (error) {
+    if (error instanceof ConfigValidationError) {
+      configError = error;
+    } else {
+      throw error;
+    }
+  }
 
   output.appendLine(`[${EXTENSION_NAME}] Extension Host environment diagnostics`);
   output.appendLine(`[${EXTENSION_NAME}] process.execPath=${executablePath}`);
   output.appendLine(`[${EXTENSION_NAME}] PATH=${pathValue}`);
   output.appendLine(`[${EXTENSION_NAME}] NODE=${nodePath}`);
   output.appendLine(`[${EXTENSION_NAME}] configured analysis command=${configuredCommand}`);
+  if (configError !== undefined) {
+    output.appendLine(`[${EXTENSION_NAME}] configuration error:`);
+    for (const line of configError.message.split("\n")) {
+      output.appendLine(`[${EXTENSION_NAME}] ${line}`);
+    }
+  }
 
   void runProcessWithTimeout({
     command: lookupCommand,
@@ -31,24 +54,26 @@ export function printEnv(output: vscode.OutputChannel) {
       output.appendLine(`[${EXTENSION_NAME}] ${lookupCommand} node failed => ${message}`);
     });
 
-  void runProcessWithTimeout({
-    command: lookupCommand,
-    args: [configuredCommand],
-    stdin: "",
-    timeoutMs: 3_000,
-    cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
-  })
-    .then((stdout) => {
-      output.appendLine(
-        `[${EXTENSION_NAME}] ${lookupCommand} ${configuredCommand} => ${stdout.trim() || "(not found)"}`
-      );
+  if (configError === undefined) {
+    void runProcessWithTimeout({
+      command: lookupCommand,
+      args: [configuredCommand],
+      stdin: "",
+      timeoutMs: 3_000,
+      cwd: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
     })
-    .catch((error) => {
-      const message = error instanceof Error ? error.message : String(error);
-      output.appendLine(
-        `[${EXTENSION_NAME}] ${lookupCommand} ${configuredCommand} failed => ${message}`
-      );
-    });
+      .then((stdout) => {
+        output.appendLine(
+          `[${EXTENSION_NAME}] ${lookupCommand} ${configuredCommand} => ${stdout.trim() || "(not found)"}`
+        );
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        output.appendLine(
+          `[${EXTENSION_NAME}] ${lookupCommand} ${configuredCommand} failed => ${message}`
+        );
+      });
+  }
 
   output.show(true);
 }

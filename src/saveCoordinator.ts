@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { analyzeSavedDocument } from "./analyze.js";
 import {
+  ConfigValidationError,
   type CodexFinding,
   type CodexLintAnalysisBlock,
   type CodexLintConfig,
@@ -19,12 +20,21 @@ export interface SaveResources {
 }
 
 export function onSave(document: vscode.TextDocument, resources: SaveResources): void {
-  const cfg = getConfig();
+  const uriKey = document.uri.toString();
+  const cfg = getConfigOrShowValidationError(document, resources);
+  if (cfg === undefined) {
+    const existingDebounce = resources.pendingByUri.get(uriKey);
+    if (existingDebounce !== undefined) {
+      clearTimeout(existingDebounce);
+      resources.pendingByUri.delete(uriKey);
+    }
+    return;
+  }
+
   if (!cfg.enabled) {
     return;
   }
 
-  const uriKey = document.uri.toString();
   const lastAnalysisAt = resources.lastAnalysisAtByUri.get(uriKey);
   if (
     lastAnalysisAt !== undefined &&
@@ -54,7 +64,11 @@ async function runAnalysisForDocument(
   runSequence: number,
   resources: SaveResources
 ): Promise<void> {
-  const cfg = getConfig();
+  const cfg = getConfigOrShowValidationError(document, resources);
+  if (cfg === undefined) {
+    return;
+  }
+
   const uriKey = document.uri.toString();
 
   if (!shouldAnalyzeDocument(document, cfg)) {
@@ -161,6 +175,25 @@ function shouldAnalyzeDocument(document: vscode.TextDocument, cfg: CodexLintConf
   return !sample.includes("\u0000");
 }
 
+function getConfigOrShowValidationError(
+  document: vscode.TextDocument,
+  resources: SaveResources
+): CodexLintConfig | undefined {
+  try {
+    return getConfig();
+  } catch (error) {
+    if (!(error instanceof ConfigValidationError)) {
+      throw error;
+    }
+
+    resources.output.appendLine(
+      `[${EXTENSION_NAME}] ${document.uri.fsPath}: ${error.message.replace(/\n/g, " | ")}`
+    );
+    resources.diagnostics.set(document.uri, [createInvalidConfigurationDiagnostic(document, error)]);
+    return undefined;
+  }
+}
+
 function createAnalyzingDiagnostic(document: vscode.TextDocument): vscode.Diagnostic {
   const diagnostic = new vscode.Diagnostic(
     testDiagnosticRange(document),
@@ -183,6 +216,20 @@ function createBlockedAnalysisDiagnostic(
   );
   diagnostic.source = EXTENSION_NAME;
   diagnostic.code = analysisBlock.code;
+  return diagnostic;
+}
+
+function createInvalidConfigurationDiagnostic(
+  document: vscode.TextDocument,
+  error: ConfigValidationError
+): vscode.Diagnostic {
+  const diagnostic = new vscode.Diagnostic(
+    testDiagnosticRange(document),
+    error.message,
+    vscode.DiagnosticSeverity.Error
+  );
+  diagnostic.source = EXTENSION_NAME;
+  diagnostic.code = "invalid-configuration";
   return diagnostic;
 }
 

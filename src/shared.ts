@@ -1,13 +1,19 @@
 import * as vscode from "vscode";
 import { spawn } from "node:child_process";
 import { parseArgsStringToArgv } from "string-argv";
+import {
+  type AnalyzerPreset,
+  type PromptTransport,
+  type ValidatedConfigValues,
+  DEFAULT_DEBOUNCE_MS,
+  DEFAULT_EXCLUDED_LANGUAGE_IDS,
+  DEFAULT_MAX_FILE_BYTES,
+  DEFAULT_MIN_FILE_REANALYZE_MS,
+  DEFAULT_TIMEOUT_MS,
+  validateConfigValues
+} from "./configCore.js";
 
 export const EXTENSION_NAME = "codexlint";
-export const DEFAULT_DEBOUNCE_MS = 750;
-export const DEFAULT_MIN_FILE_REANALYZE_MS = 300_000;
-export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
-export const DEFAULT_TIMEOUT_MS = 120_000;
-export const DEFAULT_EXCLUDED_LANGUAGE_IDS = ["markdown", "plaintext"];
 export const CUSTOM_ANALYZER_TRUST_BLOCK_CODE = "custom-analyzer-requires-trusted-workspace";
 export const CUSTOM_ANALYZER_TRUST_BLOCK_MESSAGE =
   "codexlint custom analyzers require a trusted workspace. Trust this workspace to run the configured custom analyzer.";
@@ -35,9 +41,7 @@ export const DEFAULT_PROMPT_TEMPLATE = [
   "File content:",
   "{{fileText}}"
 ].join("\n");
-
-export type AnalyzerPreset = "codexExec" | "claudeP" | "custom";
-export type PromptTransport = "stdin" | "arg";
+export { ConfigValidationError } from "./configCore.js";
 
 export interface CodexLintConfig {
   enabled: boolean;
@@ -75,57 +79,90 @@ export interface CodexLintAnalysisBlock {
 
 export function getConfig(): CodexLintConfig {
   const config = vscode.workspace.getConfiguration("codexlint");
-  const analyzerPreset = normalizeAnalyzerPreset(
-    getUserPreferredConfigValue(config, "analyzer.command", "codexExec")
-  );
-  const customCommand = getUserPreferredConfigValue(config, "analyzer.customCommand", "");
-  const customInput = normalizePromptTransport(
-    getUserPreferredConfigValue(config, "analyzer.customInput", "arg")
-  );
-  const selectedSkills = parseSelectedSkills(
-    getUserPreferredConfigValue(config, "prompt.selectedSkills", "")
-  );
-  const highlightSelectedSkills = getUserPreferredConfigValue(
-    config,
-    "prompt.highlightSelectedSkills",
-    false
-  );
-  const useCustomPrompt = getUserPreferredConfigValue(config, "prompt.customPrompt", false);
-  const customPrompt = getUserPreferredConfigValue(config, "prompt.customPromptText", "");
-  const { command, args, promptTransport, analysisBlock } = resolveAnalyzer(
-    analyzerPreset,
-    customCommand,
-    customInput
-  );
-  const promptTemplate =
-    useCustomPrompt && customPrompt.trim().length > 0 ? customPrompt : DEFAULT_PROMPT_TEMPLATE;
-
-  return {
-    enabled: getUserPreferredConfigValue(config, "operation.enabled", true),
-    debounceMs: getUserPreferredConfigValue(config, "operation.debounceMs", DEFAULT_DEBOUNCE_MS),
-    minFileReanalyzeMs: Math.max(
-      0,
-      getUserPreferredConfigValue(
-        config,
-        "operation.minFileReanalyzeMs",
-        DEFAULT_MIN_FILE_REANALYZE_MS
-      )
+  const values = validateConfigValues({
+    analyzerCommand: getUserPreferredConfigValue<unknown>(config, "analyzer.command", "codexExec"),
+    analyzerCustomCommand: getUserPreferredConfigValue<unknown>(config, "analyzer.customCommand", ""),
+    analyzerCustomInput: getUserPreferredConfigValue<unknown>(config, "analyzer.customInput", "arg"),
+    promptHighlightSelectedSkills: getUserPreferredConfigValue<unknown>(
+      config,
+      "prompt.highlightSelectedSkills",
+      false
     ),
-    maxFileBytes: getUserPreferredConfigValue(config, "operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
-    skipBinaryFiles: getUserPreferredConfigValue(config, "operation.skipBinaryFiles", true),
-    useLanguageExclusions: getUserPreferredConfigValue(
+    promptSelectedSkills: getUserPreferredConfigValue<unknown>(config, "prompt.selectedSkills", ""),
+    promptCustomPrompt: getUserPreferredConfigValue<unknown>(config, "prompt.customPrompt", false),
+    promptCustomPromptText: getUserPreferredConfigValue<unknown>(
+      config,
+      "prompt.customPromptText",
+      ""
+    ),
+    operationEnabled: getUserPreferredConfigValue<unknown>(config, "operation.enabled", true),
+    operationDebounceMs: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.debounceMs",
+      DEFAULT_DEBOUNCE_MS
+    ),
+    operationMinFileReanalyzeMs: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.minFileReanalyzeMs",
+      DEFAULT_MIN_FILE_REANALYZE_MS
+    ),
+    operationMaxFileBytes: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.maxFileBytes",
+      DEFAULT_MAX_FILE_BYTES
+    ),
+    operationSkipBinaryFiles: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.skipBinaryFiles",
+      true
+    ),
+    operationUseLanguageExclusions: getUserPreferredConfigValue<unknown>(
       config,
       "operation.useLanguageExclusions",
       true
     ),
-    excludedLanguageIds: getExcludedLanguageIds(config),
-    showDebugIO: getUserPreferredConfigValue(config, "operation.showDebugIO", false),
+    operationExcludedLanguageIds: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.excludedLanguageIds",
+      DEFAULT_EXCLUDED_LANGUAGE_IDS
+    ),
+    operationShowDebugIO: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.showDebugIO",
+      false
+    ),
+    operationTimeoutMs: getUserPreferredConfigValue<unknown>(
+      config,
+      "operation.timeoutMs",
+      DEFAULT_TIMEOUT_MS
+    )
+  });
+  return buildConfig(values);
+}
+
+function buildConfig(values: ValidatedConfigValues): CodexLintConfig {
+  const { command, args, promptTransport, analysisBlock } = resolveAnalyzer(
+    values.analyzerPreset,
+    values.customCommand,
+    values.customInput
+  );
+  const promptTemplate = values.useCustomPrompt ? values.customPromptText : DEFAULT_PROMPT_TEMPLATE;
+
+  return {
+    enabled: values.enabled,
+    debounceMs: values.debounceMs,
+    minFileReanalyzeMs: values.minFileReanalyzeMs,
+    maxFileBytes: values.maxFileBytes,
+    skipBinaryFiles: values.skipBinaryFiles,
+    useLanguageExclusions: values.useLanguageExclusions,
+    excludedLanguageIds: values.excludedLanguageIds,
+    showDebugIO: values.showDebugIO,
     analysisCommand: command,
     analysisArgs: args,
     promptTransport,
     promptTemplate,
-    selectedSkills: highlightSelectedSkills ? selectedSkills : [],
-    timeoutMs: getUserPreferredConfigValue(config, "operation.timeoutMs", DEFAULT_TIMEOUT_MS),
+    selectedSkills: values.selectedSkills,
+    timeoutMs: values.timeoutMs,
     analysisBlock
   };
 }
@@ -149,39 +186,6 @@ export function getUserPreferredConfigValue<T>(
     return inspected.defaultValue;
   }
   return defaultValue;
-}
-
-function getExcludedLanguageIds(config: vscode.WorkspaceConfiguration): string[] {
-  const configured = getUserPreferredConfigValue<unknown>(
-    config,
-    "operation.excludedLanguageIds",
-    DEFAULT_EXCLUDED_LANGUAGE_IDS
-  );
-  if (!Array.isArray(configured)) {
-    return [...DEFAULT_EXCLUDED_LANGUAGE_IDS];
-  }
-  return configured.filter((entry): entry is string => typeof entry === "string");
-}
-
-function normalizePromptTransport(value: unknown): PromptTransport {
-  if (value === "stdin" || value === "arg") {
-    return value;
-  }
-  return "arg";
-}
-
-function normalizeAnalyzerPreset(value: unknown): AnalyzerPreset {
-  if (value === "codexExec" || value === "claudeP" || value === "custom") {
-    return value;
-  }
-  return "codexExec";
-}
-
-function parseSelectedSkills(value: string): string[] {
-  return value
-    .split(/[\n,]/)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
 }
 
 function resolveAnalyzer(
