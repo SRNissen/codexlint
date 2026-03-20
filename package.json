@@ -138,6 +138,23 @@
             "default": true,
             "description": "Skip files that look binary."
           },
+          "codexlint.operation.useLanguageExclusions": {
+            "type": "boolean",
+            "default": true,
+            "description": "Skip analysis for documents whose language ID appears in Excluded Language IDs."
+          },
+          "codexlint.operation.excludedLanguageIds": {
+            "type": "array",
+            "default": [
+              "markdown",
+              "plaintext"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "uniqueItems": true,
+            "description": "Language IDs to skip when Use Language Exclusions is enabled."
+          },
           "codexlint.operation.timeoutMs": {
             "type": "number",
             "default": 120000,
