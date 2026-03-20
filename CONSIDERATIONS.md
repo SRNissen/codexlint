@@ -411,3 +411,75 @@ On "pending" tests: There are four gated tests. The two smoke tests are gated be
 - Better design for unit tests
 - Distinction of the expensive tests
 - New tests for trusted/untrusted repo paths.
+
+## File Extension Exclusions
+
+### 2026-03-20T09:04:25Z
+
+Goal-level summary from file-type exclusion discussion:
+
+#### 1 Goal
+- Add a quality-of-life feature that lets the user exclude selected file extensions from save-triggered linting.
+- The current motivating examples are text-like files such as `md` and `txt`.
+- This is primarily about reducing unnecessary analyzer runs, not changing the analyzer trust model.
+
+#### 2 Viable configuration shapes
+
+##### 2.1 List only
+One editable list setting, for example `codexlint.operation.excludedFileExtensions`.
+With that shape, the default could be `["md", "txt"]`, and an empty list would effectively disable the feature.
+
+Benefits:
+- Minimal settings surface.
+- Minimal implementation and documentation burden.
+- No redundant state between a toggle and a list.
+
+Tradeoff acknowledged:
+- "Feature disabled" is represented indirectly by an empty list rather than an explicit boolean.
+
+##### 2.2 List + toggle
+An explicit boolean toggle plus an editable list, for example:
+- `codexlint.operation.useExtensionExclusions`
+- `codexlint.operation.excludedFileExtensions`
+
+With that shape, the defaults could be:
+- toggle = `true`
+- list = `["md", "txt"]`
+
+Benefits:
+- Matches the intended four-case test matrix directly.
+- Lets a user temporarily disable the behavior without losing their configured list.
+- Makes the feature more self-discoverable in settings UI.
+
+Tradeoff acknowledged:
+- Slightly larger settings surface, and the toggle overlaps somewhat with the "empty list" interpretation.
+
+#### 3 Current preference
+- If the primary goal is clear TDD around the four desired scenarios, the toggle-plus-list design is the cleanest fit.
+- If the primary goal is minimal surface area, the list-only design is the smallest acceptable shape.
+
+#### 4 Semantics to decide before the failing test
+1. Should matching be case-insensitive?
+2. Should settings/documentation prefer `md` or `.md` as the canonical entry format?
+3. How should dotfiles such as `.gitignore` be treated?
+4. How should multi-part suffixes such as `tar.gz` be treated?
+5. Should these settings follow the existing user/global-preferred configuration model, rather than allowing repository workspace settings to control them?
+
+### Information gathering
+
+On header 4, "Semantics to decide before the failing test"
+
+
+#### 4.1: Matching should probably be case-insensitive.
+
+Before carving that in stone, I want to do a survey:
+- Do there exist file formats where two disparate file types use the same extension, separated only by case?
+- Do there exist file formats where there's only one type, but it expects the extension to be non-lowercase?
+
+#### 4.2, 4.3 and 4.4: Extension format
+
+If I implemented this without help or research, I would match on end-of-file-name. `[re]` would match any file that ended in `re`, including `file.xre` and `.gitignore`. This has advantages beyond ease of implementation, for example it settles the dotfiles question. However, I haven't given it much thought yet, and I am doing it *with* help and a willingness to do research, so I think this merits more thought.
+
+#### 4.5: Configuration model
+
+We are definitely sticking to the existing configuration model. We can't have a hostile pull request evade linting by adding attacked files to the local exclude list.
