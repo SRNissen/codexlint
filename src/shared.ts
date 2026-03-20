@@ -7,6 +7,7 @@ export const DEFAULT_DEBOUNCE_MS = 750;
 export const DEFAULT_MIN_FILE_REANALYZE_MS = 300_000;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
+export const DEFAULT_EXCLUDED_LANGUAGE_IDS = ["markdown", "plaintext"];
 export const CUSTOM_ANALYZER_TRUST_BLOCK_CODE = "custom-analyzer-requires-trusted-workspace";
 export const CUSTOM_ANALYZER_TRUST_BLOCK_MESSAGE =
   "codexlint custom analyzers require a trusted workspace. Trust this workspace to run the configured custom analyzer.";
@@ -44,6 +45,8 @@ export interface CodexLintConfig {
   minFileReanalyzeMs: number;
   maxFileBytes: number;
   skipBinaryFiles: boolean;
+  useLanguageExclusions: boolean;
+  excludedLanguageIds: string[];
   showDebugIO: boolean;
   analysisCommand: string;
   analysisArgs: string[];
@@ -110,6 +113,12 @@ export function getConfig(): CodexLintConfig {
     ),
     maxFileBytes: getUserPreferredConfigValue(config, "operation.maxFileBytes", DEFAULT_MAX_FILE_BYTES),
     skipBinaryFiles: getUserPreferredConfigValue(config, "operation.skipBinaryFiles", true),
+    useLanguageExclusions: getUserPreferredConfigValue(
+      config,
+      "operation.useLanguageExclusions",
+      true
+    ),
+    excludedLanguageIds: getExcludedLanguageIds(config),
     showDebugIO: getUserPreferredConfigValue(config, "operation.showDebugIO", false),
     analysisCommand: command,
     analysisArgs: args,
@@ -140,6 +149,18 @@ export function getUserPreferredConfigValue<T>(
     return inspected.defaultValue;
   }
   return defaultValue;
+}
+
+function getExcludedLanguageIds(config: vscode.WorkspaceConfiguration): string[] {
+  const configured = getUserPreferredConfigValue<unknown>(
+    config,
+    "operation.excludedLanguageIds",
+    DEFAULT_EXCLUDED_LANGUAGE_IDS
+  );
+  if (!Array.isArray(configured)) {
+    return [...DEFAULT_EXCLUDED_LANGUAGE_IDS];
+  }
+  return configured.filter((entry): entry is string => typeof entry === "string");
 }
 
 function normalizePromptTransport(value: unknown): PromptTransport {

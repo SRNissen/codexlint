@@ -149,6 +149,10 @@ function shouldAnalyzeDocument(document: vscode.TextDocument, cfg: CodexLintConf
     return false;
   }
 
+  if (cfg.useLanguageExclusions && cfg.excludedLanguageIds.includes(document.languageId)) {
+    return false;
+  }
+
   if (!cfg.skipBinaryFiles) {
     return true;
   }
