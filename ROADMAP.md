@@ -22,3 +22,4 @@
    - Candidate remediation:
      - Document severity mapping between analyzer schema and VS Code diagnostic/export formats.
      - Normalize exported/reporting format where feasible to reduce ambiguity.
+8. Only use defaults when configured to use defaults, not to replace erroneous config. For erroneous config, fail loud.
