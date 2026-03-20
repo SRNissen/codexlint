@@ -223,3 +223,22 @@ Good guidance, answers all my questions. It has also made me feel that maybe I'm
   - hard-coded markdown/plaintext skip
   - boolean toggle for markdown/plaintext skip
   - configurable excludedLanguageIds
+
+# From user
+
+Oh this is great guidance, and I have decided:
+ 
+- Language ID, not file extensions.
+- At least one user I know is going to add additional types in the near future (asciidoc for one), so we
+do need configurability from day 1. List of "Excluded language IDs" rather than just a "skipProse"
+toggle.
+- Markdown and plaintext should be the default languages on the list
+- That said, I prefer "toggle + list", rather than "empty list means off" (I want to turn it off and on
+again without having to preserve the list of languages out of band in between)
+- A "length" toogle is more complexity than I'm looking for, I want it conditional just on the one "on/
+off" toggle + list.
+
+Please write a failing integration test for that. It should be in a test suite that kicks off on `npm run
+build:dist-no-audit` through the sub-call to `npm run test:integration`, and I'd like you to use `npm run
+build:dist-no-audit` as your end-to-end source of truth on whether tests pass or fail. (And start with
+that command, just to make sure what the current state is before you begin).
