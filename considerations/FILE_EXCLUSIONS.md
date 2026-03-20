@@ -127,3 +127,99 @@ I also see a combined issue - maybe case insensitivity is fine for actual extens
      prevents later drift toward filename-suffix matching.
   20. If you think users may eventually want broader matching, reserve that for a separate future feature
      like exact filenames or globs. Do not overload “extension exclusions” until it means almost anything.
+
+# What even are the requirements?
+
+Good guidance, answers all my questions. It has also made me feel that maybe I'm attacking this from the
+  wrong angle entirely, but I'm not sure if that's real, or just avoidance so I can delay making a
+  tradeoff.
+
+  Let me expand on the actual problem I'm trying to solve: Good source files are short, but long files do
+  occur. Good *text* can be very very long indeed, and will not contain security problems, unless perhaps
+  it contains code examples with wrong code in them (and those will be caught once copied into source
+  files).
+
+  So I don't want the linter to spend a lot of time examining text files, and I thought "maybe the user
+  knows more text formats than I do" so I wanted it configurable. For my own purposes, I'd just filter
+  `.md`, `.txt`, `.MD` and `.TXT` explicitly and be done with it.
+
+  Disregarding our previous conversation then and starting just from that problem, how would you approach a
+  solution?
+
+
+• I would reframe the requirement first:
+
+  The real problem is not “extension parsing.” The real problem is “documents that are overwhelmingly prose
+  are low-value and potentially high-cost to analyze.”
+
+  From that framing, I would not start with a general extension-skip feature. I would start with a narrow,
+  problem-shaped gate.
+
+  My first-choice approach would be:
+
+  1. Skip obvious prose document kinds by default.
+
+  - In this codebase, that means adding a gate in src/saveCoordinator.ts alongside the existing empty/size/
+    binary checks.
+  - I would base it on document.languageId, not raw filename suffixes.
+  - Initial defaults: markdown and plaintext.
+
+  Why:
+
+  - It solves your actual cost problem directly.
+  - It avoids the case-sensitivity mess almost entirely.
+  - It avoids the “re matches SECRET_WIRE” problem entirely.
+  - It matches what VS Code already knows about the document, instead of re-implementing filetype logic
+    ourselves.
+
+  If I wanted a setting at the same time, I would make it correspond to that problem shape, not to arbitrary
+  suffix matching. For example:
+
+  - codexlint.operation.skipProseDocuments default true
+
+  or, if you want it extensible from day one:
+
+  - codexlint.operation.excludedLanguageIds default ["markdown", "plaintext"]
+
+  Between those two, I would start even smaller:
+
+  - one boolean, hard-coded behavior for markdown/plaintext
+
+  Then only add configurability if it turns out to be needed.
+
+  If you do want configurability immediately, I would still prefer language IDs over extensions:
+
+  - excludedLanguageIds is semantically cleaner than excludedFileExtensions
+  - it avoids .md vs md
+  - it avoids case sensitivity in the setting
+  - it avoids dotfile semantics
+  - it avoids final-suffix vs whole-name debates
+
+  The main downside is that it is slightly less familiar for users than extensions. But for this repo, I
+  think the correctness and clarity win is worth it.
+
+  There is one alternative I would seriously consider:
+
+  2. Separate size limits for prose-like files.
+
+  - Keep analyzing markdown/plaintext when small.
+  - Skip them only above a lower threshold than source files.
+
+  I would choose this only if you care about short docs being linted for embedded code examples or risky
+  snippets. If, as you said, prose files are basically not valuable targets, this is unnecessary complexity.
+
+  So my actual recommendation is:
+
+  - First cut: skip markdown and plaintext by default, using document.languageId
+  - Prefer a simple boolean setting if you want a user-visible knob now
+  - Avoid a general extension list unless a real need remains after that
+
+  That is the smallest solution that matches the problem you described, rather than the proxy problem we
+  started designing around.
+
+  If you want, the next requirement-gathering step can be to compare these three shapes before the failing
+  test:
+
+  - hard-coded markdown/plaintext skip
+  - boolean toggle for markdown/plaintext skip
+  - configurable excludedLanguageIds
