@@ -256,3 +256,32 @@ would have if it wasn't for the hardening pass we just did together)
 And so, there is nothing in-principle wrong about letting a custom invocation/prompt operate on an untrusted
 repository, but in practice, it is a disaster waiting to happen and should be given far more design thought before
 going ahead.
+
+# 2026-03-23T16:59:48Z
+
+Manifest-metadata follow-up closure:
+
+Two possible follow-up hardening steps were considered:
+
+1) Add stricter configuration `scope` metadata for analyzer execution settings in `package.json`.
+2) Add `restrictedConfigurations` metadata for analyzer execution settings in untrusted workspaces.
+
+Decision:
+- Neither is worth doing at this time.
+
+Reasoning:
+- The important runtime hardening is already in place:
+  - workspace settings are ignored in favor of user/global values
+  - custom analyzers are blocked in untrusted workspaces
+  - built-in presets run with explicitly constrained defaults
+- Adding `restrictedConfigurations` would now be mostly redundant with the runtime behavior and would create another list to keep in sync.
+- Adding stricter `scope` metadata would mainly be schema/UI alignment, not a material security improvement, and would introduce user-facing configuration friction.
+- In particular, `application` scope would be too restrictive for remote environments, while `machine` scope would trade away settings sync convenience for a relatively small gain now that runtime enforcement already exists.
+
+Conclusion:
+- Treat the remaining manifest-metadata ideas as lower-value polish, not unfinished hardening work.
+- Roadmap hardening should not remain blocked on them.
+
+## Addendum
+
+Neither is worth doing - at all. There's no actual `scope` value that makes for a correct here, and `restrictedConfigurations` is... all of it. This is a decision that can be revisited if the design changes, but not as we stand.
