@@ -205,19 +205,21 @@
     "clean:extension-output": "node scripts/clean.mjs out/src",
     "clean:test-output": "node scripts/clean.mjs out/test",
     "clean:test-workspace": "node scripts/clean.mjs test-workspace",
-    "check": "npm run check:lint && npm run check:typecheck",
+    "check": "npm run check:lint && npm run check:typecheck && npm run check:typecheck:unit",
     "check:lint": "eslint --config scripts/eslint.config.mjs \"src/**/*.ts\"",
     "check:typecheck": "tsc -p ./ --noEmit",
+    "check:typecheck:unit": "tsc -p ./tsconfig.unit-test.json",
     "reset:test-workspace": "node scripts/reset-test-workspace.mjs",
     "test:adversarial": "vscode-test --config scripts/vscode-test.adversarial.mjs",
     "test:diagnostic-manual": "vscode-test --config scripts/vscode-test.diagnostic-manual.mjs",
     "test:diagnostic-manual:workspace-trust": "node scripts/test-workspace-trust-diagnostic.mjs",
     "test:integration": "vscode-test --config scripts/vscode-test.mjs --forbid-pending",
-    "test:unit": "node --test test/unit/**/*.test.mjs",
+    "test:unit": "node --test test/unit/**/*.test.mjs test/unit/**/*.test.mts",
     "watch": "node scripts/watch.mjs",
     "watch:extension": "esbuild src/extension.ts --bundle --platform=node --format=esm --external:vscode --outfile=out/src/extension.js --sourcemap --watch",
     "watch:tests": "tsc -p ./tsconfig.test.json --watch",
-    "watch:typecheck": "tsc -p ./ --noEmit --watch"
+    "watch:typecheck": "tsc -p ./ --noEmit --watch",
+    "watch:typecheck:unit": "tsc -p ./tsconfig.unit-test.json --watch"
   },
   "type": "module"
 }

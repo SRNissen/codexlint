@@ -184,3 +184,82 @@ Test cleanup and artifact retention clarification:
 4) Current regression framing
 - If the intended policy is "preserve test-workspace artifacts on failure, but clear them on success", the current regression is not confusion between the two cleanup scripts.
 - The actual gap is the lack of a final success-only cleanup step for `test-workspace`.
+
+# 2026-03-23T12:47:16Z
+
+Unit-test design preference for `validateConfigValues`:
+
+1) Table-based scenarios are preferred for this function.
+- `validateConfigValues` is pure apart from throwing on invalid input.
+- The desired behavior is a set of small consistency rules, not a few large bespoke workflows.
+- A table-driven style is therefore a better fit than a sequence of ad hoc tests.
+
+2) Group scenarios by consistency-graph branch.
+- Prefer separate scenario groups that mirror the configuration graph, for example:
+  - root gate
+  - analyzer branch
+  - selected-skills branch
+  - custom-prompt branch
+  - language-exclusion branch
+  - root-gated leaf settings
+- This is preferred over one flat list of "valid" and "invalid" cases.
+- The grouping should help the reader see what part of the graph is covered, and what part is missing.
+
+3) Prefer long explicit test names over subtests.
+- The current preference is for flat registered tests with long names such as:
+  - `validateConfigValues/analyzer branch: custom requires valid customInput`
+- The reason is that this style is easier to scan in output and easier to revisit under time pressure than subtest scaffolding.
+
+4) Prefer full explicit scenario objects over patches against a baseline.
+- In test code, explicitness is preferred over DRY.
+- Each scenario should stand on its own without requiring the reader to mentally apply a delta to some shared baseline.
+- This does mean more duplication when the config shape changes, but that duplication is acceptable in this test because it reduces cognitive load when debugging regressions.
+
+5) Prefer scenario data that mirrors the configuration graph, not the validator's flat input shape.
+- The validator currently accepts a flat `RawConfigValues` object.
+- For readability, the preferred scenario representation is grouped into sections such as:
+  - `analyzer`
+  - `prompt`
+  - `operation`
+- A tiny local helper may flatten that graph-shaped test data into the flat `RawConfigValues` shape before calling `validateConfigValues`.
+- This small helper is considered an acceptable cost because it improves both readability and side-by-side comparison of scenarios.
+
+6) Keep the helper layer minimal and boring.
+- Avoid turning the test cases into a mini DSL.
+- Avoid generic metadata structures whose main effect is to make the reader parse framework before understanding the scenario.
+- One small helper to flatten scenario input, and one small helper to normalize thrown validation errors, is acceptable.
+
+7) Valid-case assertions and invalid-case assertions should differ.
+- For valid cases, compare the returned validated config with deep equality.
+- For invalid cases, compare a normalized error shape rather than the thrown error object itself.
+
+8) Validation issue order is not part of the contract.
+- `ConfigValidationError.issues` should be treated as an unordered collection for test purposes.
+- Tests should normalize and sort both expected issues and actual issues before comparing them.
+- The formatted `error.message` should not be asserted if issue order is intended to remain non-contractual, because the message formatting is order-sensitive.
+
+# 2026-03-23T14:20:39Z
+
+Typed unit tests vs compiled integration tests:
+
+1) These are separate test pipelines with different module-path constraints.
+- The VS Code-hosted integration tests are currently built with `tsc` and loaded from emitted CommonJS files under `out/test`.
+- That pipeline is currently shaped around `*.test.cts` input and `*.test.cjs` output.
+
+2) Source-run unit tests have a different import-path reality.
+- The unit tests are currently run directly from source with `node --test`.
+- In that source-run mode, a typed unit test may import project source via a `.ts` specifier, for example `../../src/configCore.ts`.
+- That works for direct runtime execution, but it is not valid for a TypeScript emit pipeline that expects emitted JavaScript paths instead.
+
+3) Therefore typed unit tests should be type-checked, not emitted, in the current design.
+- The preferred split is:
+  - integration tests: `*.test.cts`, compiled via `tsc`
+  - unit tests: `*.test.mts`, run directly by Node
+- To keep typed unit tests in the correctness gate, they should have a dedicated no-emit TypeScript check.
+
+4) This split is preferred over forcing one file shape to satisfy both pipelines at once.
+- Trying to make a single typed unit-test file work both as:
+  - direct source execution, and
+  - emitted test build output
+  introduces an avoidable import-path conflict.
+- Keeping the pipelines separate is the clearer design for the current repository.
