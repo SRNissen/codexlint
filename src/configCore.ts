@@ -67,7 +67,7 @@ export function formatConfigValidationErrorMessage(issues: ConfigValidationIssue
   return [
     "Invalid codexlint configuration:",
     ...detailLines,
-    "Fix the setting or reset it to default."
+    "To remove this message: Disable this extension, modify the setting, or reset it to default."
   ].join("\n");
 }
 
@@ -80,23 +80,7 @@ export function validateConfigValues(values: RawConfigValues): ValidatedConfigVa
     values.operationEnabled
   );
   if (enabled === false) {
-    return {
-      analyzerPreset: "codexExec",
-      customCommand: "",
-      customInput: "arg",
-      selectedSkills: [],
-      useCustomPrompt: false,
-      customPromptText: "",
-      enabled,
-      debounceMs: DEFAULT_DEBOUNCE_MS,
-      minFileReanalyzeMs: DEFAULT_MIN_FILE_REANALYZE_MS,
-      maxFileBytes: DEFAULT_MAX_FILE_BYTES,
-      skipBinaryFiles: true,
-      useLanguageExclusions: true,
-      excludedLanguageIds: [...DEFAULT_EXCLUDED_LANGUAGE_IDS],
-      showDebugIO: false,
-      timeoutMs: DEFAULT_TIMEOUT_MS
-    };
+    return buildDisabledValidatedConfig();
   }
 
   const analyzerPreset = expectEnumSetting<AnalyzerPreset>(
@@ -155,81 +139,18 @@ export function validateConfigValues(values: RawConfigValues): ValidatedConfigVa
     { minimum: 1 }
   );
 
-  let customCommand = "";
-  let customInput: PromptTransport = "arg";
-  if (analyzerPreset === "custom") {
-    const customCommandValue = expectStringSetting(
-      issues,
-      "codexlint.analyzer.customCommand",
-      values.analyzerCustomCommand
-    );
-    if (customCommandValue !== undefined) {
-      if (customCommandValue.trim().length === 0) {
-        issues.push({
-          key: "codexlint.analyzer.customCommand",
-          message: 'must be a non-empty string when codexlint.analyzer.command is "custom"',
-          value: values.analyzerCustomCommand
-        });
-      } else {
-        customCommand = customCommandValue;
-      }
-    }
-
-    const customInputValue = expectEnumSetting<PromptTransport>(
-      issues,
-      "codexlint.analyzer.customInput",
-      values.analyzerCustomInput,
-      ["arg", "stdin"]
-    );
-    if (customInputValue !== undefined) {
-      customInput = customInputValue;
-    }
-  }
-
-  let selectedSkills: string[] = [];
-  if (highlightSelectedSkills === true) {
-    const selectedSkillsValue = expectStringSetting(
-      issues,
-      "codexlint.prompt.selectedSkills",
-      values.promptSelectedSkills
-    );
-    if (selectedSkillsValue !== undefined) {
-      selectedSkills = parseSelectedSkills(selectedSkillsValue);
-    }
-  }
-
-  let customPromptText = "";
-  if (useCustomPrompt === true) {
-    const customPromptValue = expectStringSetting(
-      issues,
-      "codexlint.prompt.customPromptText",
-      values.promptCustomPromptText
-    );
-    if (customPromptValue !== undefined) {
-      if (customPromptValue.trim().length === 0) {
-        issues.push({
-          key: "codexlint.prompt.customPromptText",
-          message: 'must be a non-empty string when codexlint.prompt.customPrompt is enabled',
-          value: values.promptCustomPromptText
-        });
-      } else {
-        customPromptText = customPromptValue;
-      }
-    }
-  }
-
-  let excludedLanguageIds = [...DEFAULT_EXCLUDED_LANGUAGE_IDS];
-  if (useLanguageExclusions === true) {
-    const excludedLanguageIdValues = expectStringArraySetting(
-      issues,
-      "codexlint.operation.excludedLanguageIds",
-      values.operationExcludedLanguageIds,
-      { requireUniqueItems: true }
-    );
-    if (excludedLanguageIdValues !== undefined) {
-      excludedLanguageIds = [...excludedLanguageIdValues];
-    }
-  }
+  const { customCommand, customInput } = validateCustomAnalyzerSettings(
+    issues,
+    analyzerPreset,
+    values
+  );
+  const selectedSkills = validateSelectedSkillsSettings(issues, highlightSelectedSkills, values);
+  const customPromptText = validateCustomPromptSettings(issues, useCustomPrompt, values);
+  const excludedLanguageIds = validateLanguageExclusionSettings(
+    issues,
+    useLanguageExclusions,
+    values
+  );
 
   if (issues.length > 0) {
     throw new ConfigValidationError(issues);
@@ -252,6 +173,144 @@ export function validateConfigValues(values: RawConfigValues): ValidatedConfigVa
     showDebugIO: showDebugIO ?? false,
     timeoutMs: timeoutMs ?? DEFAULT_TIMEOUT_MS
   };
+}
+
+function buildDisabledValidatedConfig(): ValidatedConfigValues {
+  return {
+    analyzerPreset: "codexExec",
+    customCommand: "",
+    customInput: "arg",
+    selectedSkills: [],
+    useCustomPrompt: false,
+    customPromptText: "",
+    enabled: false,
+    debounceMs: DEFAULT_DEBOUNCE_MS,
+    minFileReanalyzeMs: DEFAULT_MIN_FILE_REANALYZE_MS,
+    maxFileBytes: DEFAULT_MAX_FILE_BYTES,
+    skipBinaryFiles: true,
+    useLanguageExclusions: true,
+    excludedLanguageIds: [...DEFAULT_EXCLUDED_LANGUAGE_IDS],
+    showDebugIO: false,
+    timeoutMs: DEFAULT_TIMEOUT_MS
+  };
+}
+
+function validateCustomAnalyzerSettings(
+  issues: ConfigValidationIssue[],
+  analyzerPreset: AnalyzerPreset | undefined,
+  values: RawConfigValues
+): {
+  customCommand: string;
+  customInput: PromptTransport;
+} {
+  let customCommand = "";
+  let customInput: PromptTransport = "arg";
+
+  if (analyzerPreset !== "custom") {
+    return { customCommand, customInput };
+  }
+
+  const customCommandValue = expectStringSetting(
+    issues,
+    "codexlint.analyzer.customCommand",
+    values.analyzerCustomCommand
+  );
+  if (customCommandValue !== undefined) {
+    if (customCommandValue.trim().length === 0) {
+      issues.push({
+        key: "codexlint.analyzer.customCommand",
+        message: 'must be a non-empty string when codexlint.analyzer.command is "custom"',
+        value: values.analyzerCustomCommand
+      });
+    } else {
+      customCommand = customCommandValue;
+    }
+  }
+
+  const customInputValue = expectEnumSetting<PromptTransport>(
+    issues,
+    "codexlint.analyzer.customInput",
+    values.analyzerCustomInput,
+    ["arg", "stdin"]
+  );
+  if (customInputValue !== undefined) {
+    customInput = customInputValue;
+  }
+
+  return { customCommand, customInput };
+}
+
+function validateSelectedSkillsSettings(
+  issues: ConfigValidationIssue[],
+  highlightSelectedSkills: boolean | undefined,
+  values: RawConfigValues
+): string[] {
+  if (highlightSelectedSkills !== true) {
+    return [];
+  }
+
+  const selectedSkillsValue = expectStringSetting(
+    issues,
+    "codexlint.prompt.selectedSkills",
+    values.promptSelectedSkills
+  );
+  if (selectedSkillsValue === undefined) {
+    return [];
+  }
+
+  return parseSelectedSkills(selectedSkillsValue);
+}
+
+function validateCustomPromptSettings(
+  issues: ConfigValidationIssue[],
+  useCustomPrompt: boolean | undefined,
+  values: RawConfigValues
+): string {
+  if (useCustomPrompt !== true) {
+    return "";
+  }
+
+  const customPromptValue = expectStringSetting(
+    issues,
+    "codexlint.prompt.customPromptText",
+    values.promptCustomPromptText
+  );
+  if (customPromptValue === undefined) {
+    return "";
+  }
+
+  if (customPromptValue.trim().length === 0) {
+    issues.push({
+      key: "codexlint.prompt.customPromptText",
+      message: 'must be a non-empty string when codexlint.prompt.customPrompt is enabled',
+      value: values.promptCustomPromptText
+    });
+    return "";
+  }
+
+  return customPromptValue;
+}
+
+function validateLanguageExclusionSettings(
+  issues: ConfigValidationIssue[],
+  useLanguageExclusions: boolean | undefined,
+  values: RawConfigValues
+): string[] {
+  if (useLanguageExclusions !== true) {
+    return [...DEFAULT_EXCLUDED_LANGUAGE_IDS];
+  }
+
+  const excludedLanguageIdValues = expectStringArraySetting(
+    issues,
+    "codexlint.operation.excludedLanguageIds",
+    values.operationExcludedLanguageIds,
+    { requireUniqueItems: true }
+  );
+  if (excludedLanguageIdValues === undefined) {
+    return [...DEFAULT_EXCLUDED_LANGUAGE_IDS];
+  }
+
+  return [...excludedLanguageIdValues];
 }
 
 function expectBooleanSetting(

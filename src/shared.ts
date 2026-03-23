@@ -4,6 +4,7 @@ import { parseArgsStringToArgv } from "string-argv";
 import {
   type AnalyzerPreset,
   type PromptTransport,
+  type RawConfigValues,
   type ValidatedConfigValues,
   DEFAULT_DEBOUNCE_MS,
   DEFAULT_EXCLUDED_LANGUAGE_IDS,
@@ -43,6 +44,27 @@ export const DEFAULT_PROMPT_TEMPLATE = [
 ].join("\n");
 export { ConfigValidationError } from "./configCore.js";
 
+// package.json contributed defaults are the canonical product defaults.
+// These values are only a runtime safety net if VS Code does not surface them.
+const RAW_CONFIG_RUNTIME_FALLBACKS: RawConfigValues = {
+  analyzerCommand: "codexExec",
+  analyzerCustomCommand: "",
+  analyzerCustomInput: "arg",
+  promptHighlightSelectedSkills: false,
+  promptSelectedSkills: "",
+  promptCustomPrompt: false,
+  promptCustomPromptText: "",
+  operationEnabled: true,
+  operationDebounceMs: DEFAULT_DEBOUNCE_MS,
+  operationMinFileReanalyzeMs: DEFAULT_MIN_FILE_REANALYZE_MS,
+  operationMaxFileBytes: DEFAULT_MAX_FILE_BYTES,
+  operationSkipBinaryFiles: true,
+  operationUseLanguageExclusions: true,
+  operationExcludedLanguageIds: DEFAULT_EXCLUDED_LANGUAGE_IDS,
+  operationShowDebugIO: false,
+  operationTimeoutMs: DEFAULT_TIMEOUT_MS
+};
+
 export interface CodexLintConfig {
   enabled: boolean;
   debounceMs: number;
@@ -79,64 +101,8 @@ export interface CodexLintAnalysisBlock {
 
 export function getConfig(): CodexLintConfig {
   const config = vscode.workspace.getConfiguration("codexlint");
-  const values = validateConfigValues({
-    analyzerCommand: getUserPreferredConfigValue<unknown>(config, "analyzer.command", "codexExec"),
-    analyzerCustomCommand: getUserPreferredConfigValue<unknown>(config, "analyzer.customCommand", ""),
-    analyzerCustomInput: getUserPreferredConfigValue<unknown>(config, "analyzer.customInput", "arg"),
-    promptHighlightSelectedSkills: getUserPreferredConfigValue<unknown>(
-      config,
-      "prompt.highlightSelectedSkills",
-      false
-    ),
-    promptSelectedSkills: getUserPreferredConfigValue<unknown>(config, "prompt.selectedSkills", ""),
-    promptCustomPrompt: getUserPreferredConfigValue<unknown>(config, "prompt.customPrompt", false),
-    promptCustomPromptText: getUserPreferredConfigValue<unknown>(
-      config,
-      "prompt.customPromptText",
-      ""
-    ),
-    operationEnabled: getUserPreferredConfigValue<unknown>(config, "operation.enabled", true),
-    operationDebounceMs: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.debounceMs",
-      DEFAULT_DEBOUNCE_MS
-    ),
-    operationMinFileReanalyzeMs: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.minFileReanalyzeMs",
-      DEFAULT_MIN_FILE_REANALYZE_MS
-    ),
-    operationMaxFileBytes: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.maxFileBytes",
-      DEFAULT_MAX_FILE_BYTES
-    ),
-    operationSkipBinaryFiles: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.skipBinaryFiles",
-      true
-    ),
-    operationUseLanguageExclusions: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.useLanguageExclusions",
-      true
-    ),
-    operationExcludedLanguageIds: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.excludedLanguageIds",
-      DEFAULT_EXCLUDED_LANGUAGE_IDS
-    ),
-    operationShowDebugIO: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.showDebugIO",
-      false
-    ),
-    operationTimeoutMs: getUserPreferredConfigValue<unknown>(
-      config,
-      "operation.timeoutMs",
-      DEFAULT_TIMEOUT_MS
-    )
-  });
+  const rawValues = readUserLevelRawConfigValues(config);
+  const values = validateConfigValues(rawValues);
   return buildConfig(values);
 }
 
@@ -167,7 +133,92 @@ function buildConfig(values: ValidatedConfigValues): CodexLintConfig {
   };
 }
 
-export function getUserPreferredConfigValue<T>(
+function readUserLevelRawConfigValues(config: vscode.WorkspaceConfiguration): RawConfigValues {
+  return {
+    analyzerCommand: getUserLevelConfigValue(
+      config,
+      "analyzer.command",
+      RAW_CONFIG_RUNTIME_FALLBACKS.analyzerCommand
+    ),
+    analyzerCustomCommand: getUserLevelConfigValue(
+      config,
+      "analyzer.customCommand",
+      RAW_CONFIG_RUNTIME_FALLBACKS.analyzerCustomCommand
+    ),
+    analyzerCustomInput: getUserLevelConfigValue(
+      config,
+      "analyzer.customInput",
+      RAW_CONFIG_RUNTIME_FALLBACKS.analyzerCustomInput
+    ),
+    promptHighlightSelectedSkills: getUserLevelConfigValue(
+      config,
+      "prompt.highlightSelectedSkills",
+      RAW_CONFIG_RUNTIME_FALLBACKS.promptHighlightSelectedSkills
+    ),
+    promptSelectedSkills: getUserLevelConfigValue(
+      config,
+      "prompt.selectedSkills",
+      RAW_CONFIG_RUNTIME_FALLBACKS.promptSelectedSkills
+    ),
+    promptCustomPrompt: getUserLevelConfigValue(
+      config,
+      "prompt.customPrompt",
+      RAW_CONFIG_RUNTIME_FALLBACKS.promptCustomPrompt
+    ),
+    promptCustomPromptText: getUserLevelConfigValue(
+      config,
+      "prompt.customPromptText",
+      RAW_CONFIG_RUNTIME_FALLBACKS.promptCustomPromptText
+    ),
+    operationEnabled: getUserLevelConfigValue(
+      config,
+      "operation.enabled",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationEnabled
+    ),
+    operationDebounceMs: getUserLevelConfigValue(
+      config,
+      "operation.debounceMs",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationDebounceMs
+    ),
+    operationMinFileReanalyzeMs: getUserLevelConfigValue(
+      config,
+      "operation.minFileReanalyzeMs",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationMinFileReanalyzeMs
+    ),
+    operationMaxFileBytes: getUserLevelConfigValue(
+      config,
+      "operation.maxFileBytes",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationMaxFileBytes
+    ),
+    operationSkipBinaryFiles: getUserLevelConfigValue(
+      config,
+      "operation.skipBinaryFiles",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationSkipBinaryFiles
+    ),
+    operationUseLanguageExclusions: getUserLevelConfigValue(
+      config,
+      "operation.useLanguageExclusions",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationUseLanguageExclusions
+    ),
+    operationExcludedLanguageIds: getUserLevelConfigValue(
+      config,
+      "operation.excludedLanguageIds",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationExcludedLanguageIds
+    ),
+    operationShowDebugIO: getUserLevelConfigValue(
+      config,
+      "operation.showDebugIO",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationShowDebugIO
+    ),
+    operationTimeoutMs: getUserLevelConfigValue(
+      config,
+      "operation.timeoutMs",
+      RAW_CONFIG_RUNTIME_FALLBACKS.operationTimeoutMs
+    )
+  };
+}
+
+export function getUserLevelConfigValue<T>(
   config: vscode.WorkspaceConfiguration,
   key: string,
   defaultValue: T

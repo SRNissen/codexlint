@@ -3,7 +3,7 @@ import {
   ConfigValidationError,
   EXTENSION_NAME,
   getConfig,
-  getUserPreferredConfigValue,
+  getUserLevelConfigValue,
   runProcessWithTimeout
 } from "./shared.js";
 
@@ -80,6 +80,6 @@ export function printEnv(output: vscode.OutputChannel) {
 
 export async function updateDebugCommandVisibility(): Promise<void> {
   const config = vscode.workspace.getConfiguration("codexlint");
-  const isVisible = getUserPreferredConfigValue(config, "operation.showDebugCommand", false);
+  const isVisible = getUserLevelConfigValue(config, "operation.showDebugCommand", false);
   await vscode.commands.executeCommand("setContext", SHOW_DEBUG_COMMAND_CONTEXT, isVisible);
 }
