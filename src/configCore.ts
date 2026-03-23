@@ -3,7 +3,6 @@ export const DEFAULT_MIN_FILE_REANALYZE_MS = 300_000;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 export const DEFAULT_EXCLUDED_LANGUAGE_IDS = ["markdown", "plaintext"];
-const SKILL_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
 const SELECTED_SKILLS_VALIDATION_MESSAGE =
   "must be an array of skill IDs (max 64 chars; lowercase letters, numbers, and hyphens only; no leading or trailing hyphen) when codexlint.prompt.highlightSelectedSkills is enabled";
 
@@ -452,7 +451,23 @@ function expectStringArraySetting(
 }
 
 function isValidSkillId(value: string): boolean {
-  return SKILL_ID_PATTERN.test(value);
+  if (value.length === 0 || value.length > 64) {
+    return false;
+  }
+
+  if (value[0] === "-" || value[value.length - 1] === "-") {
+    return false;
+  }
+
+  for (const character of value) {
+    const isLowercaseLetter = character >= "a" && character <= "z";
+    const isDigit = character >= "0" && character <= "9";
+    if (!isLowercaseLetter && !isDigit && character !== "-") {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function formatConfigValue(value: unknown): string {
