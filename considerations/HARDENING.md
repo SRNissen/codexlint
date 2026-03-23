@@ -284,4 +284,4 @@ Conclusion:
 
 ## Addendum
 
-Neither is worth doing - at all. There's no actual `scope` value that makes for a correct here, and `restrictedConfigurations` is... all of it. This is a decision that can be revisited if the design changes, but not as we stand.
+Neither is worth doing - at all. There's no actual `scope` value that for correct semantics here, and `restrictedConfigurations` is... all of it. This is a decision that can be revisited if the design changes, but not as we stand.
