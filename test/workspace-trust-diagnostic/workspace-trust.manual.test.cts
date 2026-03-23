@@ -314,10 +314,9 @@ async function installBuiltinShim(
   const shimPath = path.join(binDir, commandName);
   await writeFile(
     shimPath,
-    [
-      "#!/usr/bin/env sh",
-      `exec "${escapeForDoubleQuotes(process.execPath)}" "${escapeForDoubleQuotes(analyzerImplPath)}" "$@"`
-    ].join("\n") + "\n",
+    `#!/usr/bin/env sh
+exec "${escapeForDoubleQuotes(process.execPath)}" "${escapeForDoubleQuotes(analyzerImplPath)}" "$@"
+`,
     "utf8"
   );
   await chmod(shimPath, 0o755);

@@ -20,12 +20,10 @@ test("parseJsonLenient parses direct findings array JSON", () => {
 
 test("parseJsonLenient parses fenced json block", () => {
   const parsed = parseJsonLenient(
-    [
-      "Analyzer output:",
-      "```json",
-      '{"findings":[{"message":"fenced","severity":"warning","line":1,"column":1}]}',
-      "```"
-    ].join("\n")
+    `Analyzer output:
+\`\`\`json
+{"findings":[{"message":"fenced","severity":"warning","line":1,"column":1}]}
+\`\`\``
   );
 
   assert.equal(typeof parsed, "object");

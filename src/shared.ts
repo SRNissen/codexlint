@@ -18,30 +18,29 @@ export const EXTENSION_NAME = "codexlint";
 export const CUSTOM_ANALYZER_TRUST_BLOCK_CODE = "custom-analyzer-requires-trusted-workspace";
 export const CUSTOM_ANALYZER_TRUST_BLOCK_MESSAGE =
   "codexlint custom analyzers require a trusted workspace. Trust this workspace to run the configured custom analyzer.";
-export const DEFAULT_PROMPT_TEMPLATE = [
-  "You are a static security reviewer for a single source file.",
-  "Analyze only the file content provided below.",
-  "Return JSON only.",
-  "Output schema:",
-  "{",
-  '  "findings": [',
-  "    {",
-  '      "message": "string",',
-  '      "severity": "error|warning|info",',
-  '      "line": 1,',
-  '      "column": 1,',
-  '      "endLine": 1,',
-  '      "endColumn": 1,',
-  "    }",
-  "  ]",
-  "}",
-  "{{selectedSkillsBlock}}",
-  "",
-  "File path: {{filePath}}",
-  "Language: {{fileLanguage}}",
-  "File content:",
-  "{{fileText}}"
-].join("\n");
+export const DEFAULT_PROMPT_TEMPLATE = 
+`You are a static security reviewer for a single source file.
+Analyze only the file content provided below.
+Return JSON only.
+Output schema:
+{
+  "findings": [
+    {
+      "message": "string",
+      "severity": "error|warning|info",
+      "line": 1,
+      "column": 1,
+      "endLine": 1,
+      "endColumn": 1,
+    }
+  ]
+},
+{{selectedSkillsBlock}},
+,
+File path: {{filePath}},
+Language: {{fileLanguage}},
+File content:
+{{fileText}}"`;
 export { ConfigValidationError } from "./configCore.js";
 
 // package.json contributed defaults are the canonical product defaults.
