@@ -1,3 +1,4 @@
+// Legacy coverage for the pre-consistency-graph configuration model.
 import assert from "node:assert/strict";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -5,8 +6,8 @@ import * as vscode from "vscode";
 
 const POLL_INTERVAL_MS = 50;
 
-suite("config validation behavior", () => {
-  test("blocks analysis and shows a diagnostic when the active analyzer config is invalid", async function () {
+suite("legacy config validation behavior", () => {
+  test("legacy: blocks analysis and shows a diagnostic when the active analyzer config is invalid", async function () {
     this.timeout(getDefaultWaitForMs() + 10_000);
 
     const workspacePath = getWorkspacePath();

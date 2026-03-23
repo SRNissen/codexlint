@@ -1,3 +1,4 @@
+// Legacy coverage for the pre-consistency-graph configuration model.
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
@@ -31,7 +32,7 @@ function createValidRawConfigValues() {
   };
 }
 
-test("validateConfigValues ignores invalid custom analyzer transport when a built-in analyzer is selected", () => {
+test("legacy: validateConfigValues ignores invalid custom analyzer transport when a built-in analyzer is selected", () => {
   const values = createValidRawConfigValues();
   values.analyzerCustomInput = "pipe";
 
@@ -41,7 +42,7 @@ test("validateConfigValues ignores invalid custom analyzer transport when a buil
   assert.equal(resolved.customInput, "arg");
 });
 
-test("validateConfigValues ignores unrelated invalid analysis settings when the extension is disabled", () => {
+test("legacy: validateConfigValues ignores unrelated invalid analysis settings when the extension is disabled", () => {
   const values = createValidRawConfigValues();
   values.operationEnabled = false;
   values.analyzerCommand = "custom";
@@ -54,7 +55,7 @@ test("validateConfigValues ignores unrelated invalid analysis settings when the 
   assert.equal(resolved.enabled, false);
 });
 
-test("validateConfigValues rejects invalid custom analyzer transport when custom analyzer mode is active", () => {
+test("legacy: validateConfigValues rejects invalid custom analyzer transport when custom analyzer mode is active", () => {
   const values = createValidRawConfigValues();
   values.analyzerCommand = "custom";
   values.analyzerCustomCommand = "node analyzer.js";
@@ -71,7 +72,7 @@ test("validateConfigValues rejects invalid custom analyzer transport when custom
   );
 });
 
-test("validateConfigValues rejects an empty custom prompt when custom prompt mode is enabled", () => {
+test("legacy: validateConfigValues rejects an empty custom prompt when custom prompt mode is enabled", () => {
   const values = createValidRawConfigValues();
   values.promptCustomPrompt = true;
   values.promptCustomPromptText = "   ";
