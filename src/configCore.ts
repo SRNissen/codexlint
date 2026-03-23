@@ -3,6 +3,9 @@ export const DEFAULT_MIN_FILE_REANALYZE_MS = 300_000;
 export const DEFAULT_MAX_FILE_BYTES = 1_000_000;
 export const DEFAULT_TIMEOUT_MS = 120_000;
 export const DEFAULT_EXCLUDED_LANGUAGE_IDS = ["markdown", "plaintext"];
+const SKILL_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?$/;
+const SELECTED_SKILLS_VALIDATION_MESSAGE =
+  "must be an array of skill IDs (max 64 chars; lowercase letters, numbers, and hyphens only; no leading or trailing hyphen) when codexlint.prompt.highlightSelectedSkills is enabled";
 
 export type AnalyzerPreset = "codexExec" | "claudeP" | "custom";
 export type PromptTransport = "stdin" | "arg";
@@ -249,16 +252,28 @@ function validateSelectedSkillsSettings(
     return [];
   }
 
-  const selectedSkillsValue = expectStringSetting(
-    issues,
-    "codexlint.prompt.selectedSkills",
-    values.promptSelectedSkills
-  );
-  if (selectedSkillsValue === undefined) {
+  if (
+    !Array.isArray(values.promptSelectedSkills) ||
+    !values.promptSelectedSkills.every((entry) => typeof entry === "string")
+  ) {
+    issues.push({
+      key: "codexlint.prompt.selectedSkills",
+      message: SELECTED_SKILLS_VALIDATION_MESSAGE,
+      value: values.promptSelectedSkills
+    });
     return [];
   }
 
-  return parseSelectedSkills(selectedSkillsValue);
+  if (!values.promptSelectedSkills.every(isValidSkillId)) {
+    issues.push({
+      key: "codexlint.prompt.selectedSkills",
+      message: SELECTED_SKILLS_VALIDATION_MESSAGE,
+      value: values.promptSelectedSkills
+    });
+    return [];
+  }
+
+  return [...values.promptSelectedSkills];
 }
 
 function validateCustomPromptSettings(
@@ -436,11 +451,8 @@ function expectStringArraySetting(
   return [...value];
 }
 
-function parseSelectedSkills(value: string): string[] {
-  return value
-    .split(/[\n,]/)
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0);
+function isValidSkillId(value: string): boolean {
+  return SKILL_ID_PATTERN.test(value);
 }
 
 function formatConfigValue(value: unknown): string {

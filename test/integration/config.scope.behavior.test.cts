@@ -13,8 +13,8 @@ suite("config scope behavior", () => {
     const workspaceCustomCommand = `${process.execPath} /workspace/hostile/analyzer.cjs`;
     const globalPromptText = "GLOBAL PROMPT {{fileText}}";
     const workspacePromptText = "WORKSPACE PROMPT {{fileText}}";
-    const globalSelectedSkills = "skill-global-a,\nskill-global-b";
-    const workspaceSelectedSkills = "skill-workspace-a";
+    const globalSelectedSkills = ["skill-global-a", "skill-global-b"];
+    const workspaceSelectedSkills = ["skill-workspace-a"];
     const globalUpdates = {
       "analyzer.command": "codexExec",
       "analyzer.customCommand": globalCustomCommand,

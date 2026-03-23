@@ -51,7 +51,7 @@ const RAW_CONFIG_RUNTIME_FALLBACKS: RawConfigValues = {
   analyzerCustomCommand: "",
   analyzerCustomInput: "arg",
   promptHighlightSelectedSkills: false,
-  promptSelectedSkills: "",
+  promptSelectedSkills: [],
   promptCustomPrompt: false,
   promptCustomPromptText: "",
   operationEnabled: true,

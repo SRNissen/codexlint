@@ -91,9 +91,12 @@
             "description": "Highlight selected skill names in the prompt text. Models can still access all skills regardless of this setting."
           },
           "codexlint.prompt.selectedSkills": {
-            "type": "string",
-            "default": "",
-            "description": "Comma-separated skill names to highlight in the prompt. Upgrade note: newer codexlint releases use an array of skill IDs here; if you upgraded and now see configuration errors for this setting, convert the old string into a JSON array."
+            "type": "array",
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "description": "Skill IDs to highlight in the prompt. Each skill ID must be 1-64 characters of lowercase letters, numbers, or hyphens, and must not start or end with a hyphen."
           },
           "codexlint.prompt.customPrompt": {
             "type": "boolean",
