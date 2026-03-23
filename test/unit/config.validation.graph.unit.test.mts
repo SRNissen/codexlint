@@ -374,8 +374,8 @@ const customPromptBranchInvalidCases = [
 registerValidCases("root gate", rootGateValidCases);
 registerValidCases("analyzer branch", analyzerBranchValidCases);
 registerInvalidCases("analyzer branch", analyzerBranchInvalidCases);
-registerValidCases("selected skills branch", selectedSkillsBranchValidCases, true);
-registerInvalidCases("selected skills branch", selectedSkillsBranchInvalidCases, true);
+registerValidCases("selected skills branch", selectedSkillsBranchValidCases);
+registerInvalidCases("selected skills branch", selectedSkillsBranchInvalidCases);
 registerInvalidCases("custom prompt branch", customPromptBranchInvalidCases);
 
 function registerValidCases(branchName: string, cases: ValidCase[], skip = false): void {
