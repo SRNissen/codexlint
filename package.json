@@ -93,7 +93,7 @@
           "codexlint.prompt.selectedSkills": {
             "type": "string",
             "default": "",
-            "description": "Comma-separated or newline-separated skill names to highlight in the prompt."
+            "description": "Comma-separated skill names to highlight in the prompt. Upgrade note: newer codexlint releases use an array of skill IDs here; if you upgraded and now see configuration errors for this setting, convert the old string into a JSON array."
           },
           "codexlint.prompt.customPrompt": {
             "type": "boolean",
