@@ -53,8 +53,8 @@ suite("legacy config validation behavior", () => {
         );
         assert.ok(configError, "expected a codexlint configuration diagnostic");
         assert.equal(configError.severity, vscode.DiagnosticSeverity.Error);
+        assert.match(configError.message, /Invalid codexlint configuration/i);
         assert.match(configError.message, /codexlint\.analyzer\.customInput/);
-        assert.match(configError.message, /Fix the setting or reset it to default/i);
         assert.equal(await readCounter(counterPath), 0, "expected analyzer not to run");
       }
     );
