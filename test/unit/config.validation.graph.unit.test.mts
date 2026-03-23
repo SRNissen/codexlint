@@ -133,6 +133,213 @@ const analyzerBranchInvalidCases = [
   }
 ] satisfies InvalidCase[];
 
+const selectedSkillsBranchValidCases = [
+  {
+    name: "disabled ignores legacy comma-separated selectedSkills format",
+    raw: {
+      analyzerCommand: "codexExec",
+      analyzerCustomCommand: "",
+      analyzerCustomInput: "arg",
+      promptHighlightSelectedSkills: false,
+      promptSelectedSkills: "cpp-security,api-hardening",
+      promptCustomPrompt: false,
+      promptCustomPromptText: "",
+      operationEnabled: true,
+      operationDebounceMs: 750,
+      operationMinFileReanalyzeMs: 300000,
+      operationMaxFileBytes: 1000000,
+      operationSkipBinaryFiles: true,
+      operationUseLanguageExclusions: true,
+      operationExcludedLanguageIds: ["markdown", "plaintext"],
+      operationShowDebugIO: false,
+      operationTimeoutMs: 120000
+    } satisfies RawConfigValues,
+    expected: {
+      analyzerPreset: "codexExec",
+      customCommand: "",
+      customInput: "arg",
+      selectedSkills: [],
+      useCustomPrompt: false,
+      customPromptText: "",
+      enabled: true,
+      debounceMs: 750,
+      minFileReanalyzeMs: 300000,
+      maxFileBytes: 1000000,
+      skipBinaryFiles: true,
+      useLanguageExclusions: true,
+      excludedLanguageIds: ["markdown", "plaintext"],
+      showDebugIO: false,
+      timeoutMs: 120000
+    } satisfies ValidatedConfigValues
+  },
+  {
+    name: "enabled accepts an empty selectedSkills array",
+    raw: {
+      analyzerCommand: "codexExec",
+      analyzerCustomCommand: "",
+      analyzerCustomInput: "arg",
+      promptHighlightSelectedSkills: true,
+      promptSelectedSkills: [],
+      promptCustomPrompt: false,
+      promptCustomPromptText: "",
+      operationEnabled: true,
+      operationDebounceMs: 750,
+      operationMinFileReanalyzeMs: 300000,
+      operationMaxFileBytes: 1000000,
+      operationSkipBinaryFiles: true,
+      operationUseLanguageExclusions: true,
+      operationExcludedLanguageIds: ["markdown", "plaintext"],
+      operationShowDebugIO: false,
+      operationTimeoutMs: 120000
+    } satisfies RawConfigValues,
+    expected: {
+      analyzerPreset: "codexExec",
+      customCommand: "",
+      customInput: "arg",
+      selectedSkills: [],
+      useCustomPrompt: false,
+      customPromptText: "",
+      enabled: true,
+      debounceMs: 750,
+      minFileReanalyzeMs: 300000,
+      maxFileBytes: 1000000,
+      skipBinaryFiles: true,
+      useLanguageExclusions: true,
+      excludedLanguageIds: ["markdown", "plaintext"],
+      showDebugIO: false,
+      timeoutMs: 120000
+    } satisfies ValidatedConfigValues
+  },
+  {
+    name: "enabled accepts a valid selectedSkills array",
+    raw: {
+      analyzerCommand: "codexExec",
+      analyzerCustomCommand: "",
+      analyzerCustomInput: "arg",
+      promptHighlightSelectedSkills: true,
+      promptSelectedSkills: ["cpp-security", "api-hardening"],
+      promptCustomPrompt: false,
+      promptCustomPromptText: "",
+      operationEnabled: true,
+      operationDebounceMs: 750,
+      operationMinFileReanalyzeMs: 300000,
+      operationMaxFileBytes: 1000000,
+      operationSkipBinaryFiles: true,
+      operationUseLanguageExclusions: true,
+      operationExcludedLanguageIds: ["markdown", "plaintext"],
+      operationShowDebugIO: false,
+      operationTimeoutMs: 120000
+    } satisfies RawConfigValues,
+    expected: {
+      analyzerPreset: "codexExec",
+      customCommand: "",
+      customInput: "arg",
+      selectedSkills: ["cpp-security", "api-hardening"],
+      useCustomPrompt: false,
+      customPromptText: "",
+      enabled: true,
+      debounceMs: 750,
+      minFileReanalyzeMs: 300000,
+      maxFileBytes: 1000000,
+      skipBinaryFiles: true,
+      useLanguageExclusions: true,
+      excludedLanguageIds: ["markdown", "plaintext"],
+      showDebugIO: false,
+      timeoutMs: 120000
+    } satisfies ValidatedConfigValues
+  }
+] satisfies ValidCase[];
+
+const selectedSkillsBranchInvalidCases = [
+  {
+    name: "enabled rejects an empty string selected skill",
+    raw: {
+      analyzerCommand: "codexExec",
+      analyzerCustomCommand: "",
+      analyzerCustomInput: "arg",
+      promptHighlightSelectedSkills: true,
+      promptSelectedSkills: [""],
+      promptCustomPrompt: false,
+      promptCustomPromptText: "",
+      operationEnabled: true,
+      operationDebounceMs: 750,
+      operationMinFileReanalyzeMs: 300000,
+      operationMaxFileBytes: 1000000,
+      operationSkipBinaryFiles: true,
+      operationUseLanguageExclusions: true,
+      operationExcludedLanguageIds: ["markdown", "plaintext"],
+      operationShowDebugIO: false,
+      operationTimeoutMs: 120000
+    } satisfies RawConfigValues,
+    expectedIssues: [
+      {
+        key: "codexlint.prompt.selectedSkills",
+        message:
+          "must be an array of skill IDs (max 64 chars; lowercase letters, numbers, and hyphens only; no leading or trailing hyphen) when codexlint.prompt.highlightSelectedSkills is enabled",
+        value: [""]
+      }
+    ] satisfies ConfigValidationIssue[]
+  },
+  {
+    name: "enabled rejects a selected skill whose name violates the skill ID spec",
+    raw: {
+      analyzerCommand: "codexExec",
+      analyzerCustomCommand: "",
+      analyzerCustomInput: "arg",
+      promptHighlightSelectedSkills: true,
+      promptSelectedSkills: ["Bad-skill"],
+      promptCustomPrompt: false,
+      promptCustomPromptText: "",
+      operationEnabled: true,
+      operationDebounceMs: 750,
+      operationMinFileReanalyzeMs: 300000,
+      operationMaxFileBytes: 1000000,
+      operationSkipBinaryFiles: true,
+      operationUseLanguageExclusions: true,
+      operationExcludedLanguageIds: ["markdown", "plaintext"],
+      operationShowDebugIO: false,
+      operationTimeoutMs: 120000
+    } satisfies RawConfigValues,
+    expectedIssues: [
+      {
+        key: "codexlint.prompt.selectedSkills",
+        message:
+          "must be an array of skill IDs (max 64 chars; lowercase letters, numbers, and hyphens only; no leading or trailing hyphen) when codexlint.prompt.highlightSelectedSkills is enabled",
+        value: ["Bad-skill"]
+      }
+    ] satisfies ConfigValidationIssue[]
+  },
+  {
+    name: "enabled rejects legacy comma-separated selectedSkills text",
+    raw: {
+      analyzerCommand: "codexExec",
+      analyzerCustomCommand: "",
+      analyzerCustomInput: "arg",
+      promptHighlightSelectedSkills: true,
+      promptSelectedSkills: "cpp-security,api-hardening",
+      promptCustomPrompt: false,
+      promptCustomPromptText: "",
+      operationEnabled: true,
+      operationDebounceMs: 750,
+      operationMinFileReanalyzeMs: 300000,
+      operationMaxFileBytes: 1000000,
+      operationSkipBinaryFiles: true,
+      operationUseLanguageExclusions: true,
+      operationExcludedLanguageIds: ["markdown", "plaintext"],
+      operationShowDebugIO: false,
+      operationTimeoutMs: 120000
+    } satisfies RawConfigValues,
+    expectedIssues: [
+      {
+        key: "codexlint.prompt.selectedSkills",
+        message:
+          "must be an array of skill IDs (max 64 chars; lowercase letters, numbers, and hyphens only; no leading or trailing hyphen) when codexlint.prompt.highlightSelectedSkills is enabled",
+        value: "cpp-security,api-hardening"
+      }
+    ] satisfies ConfigValidationIssue[]
+  }
+] satisfies InvalidCase[];
+
 const customPromptBranchInvalidCases = [
   {
     name: "enabled custom prompt requires non-empty prompt text",
@@ -167,6 +374,8 @@ const customPromptBranchInvalidCases = [
 registerValidCases("root gate", rootGateValidCases);
 registerValidCases("analyzer branch", analyzerBranchValidCases);
 registerInvalidCases("analyzer branch", analyzerBranchInvalidCases);
+registerValidCases("selected skills branch", selectedSkillsBranchValidCases);
+registerInvalidCases("selected skills branch", selectedSkillsBranchInvalidCases);
 registerInvalidCases("custom prompt branch", customPromptBranchInvalidCases);
 
 function registerValidCases(branchName: string, cases: ValidCase[]): void {
